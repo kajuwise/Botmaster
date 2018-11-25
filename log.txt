@@ -1,0 +1,3 @@
+21:04:10.989 Debug: Neve GO...
+
+21:04:36.348 Debug: "21:04:36.348" current  new state:  FIND_BALL

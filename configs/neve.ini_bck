@@ -1,0 +1,20 @@
+[robot]
+
+; Robot name
+robot_name = Neve
+
+; Using devices
+video_device = /dev/video0
+serial_device = /dev/ttyUSB0
+
+; Video settings
+brightness = 100
+contrast = 100
+topCut = 0
+img_width = 1280
+img_height = 524
+img_offset_x = 0
+img_offset_y = 250
+img_flip = 1
+img_exposure = 10000
+img_gain = 0
