@@ -3,9 +3,9 @@
 #=============================================CONF==============================================================================
 
 #PLACE HERE YOUR FIRST TIME BOTMASTER EXECUTION COMMAND HERE
-startCommand='./botmaster2013 -r neve'
+startCommand='./botmaster -r neve'
 #PLACE HERE YOUR BOTMASTER RESTART COMMAND HERE
-restartCommand='./botmaster2013 -g -r neve'
+restartCommand='./botmaster -g -r neve'
 
 
 #============================================CYCLE==============================================================================

@@ -23,6 +23,9 @@
 
 #define SOLENOID_PIN  12
 
+#define THROWER_PWM_PIN 9
+#define THROWER_HALT_PWM 225
+
 long int scanFreq = 0;  // * 1 Hz
 unsigned long scanFreqTime = 0;
 
@@ -108,10 +111,13 @@ void motorInit() {
   pinMode(M2_EN_PIN , OUTPUT);
   pinMode(M2_DIR_PIN, OUTPUT);
   
+  pinMode(THROWER_PWM_PIN, OUTPUT);
+  
   //attachInterrupt(5, M0_ISR, CHANGE);
   //attachInterrupt(4, M1_ISR, CHANGE);
   //attachInterrupt(3, M2_ISR, CHANGE);
   
+  throwerHalt();
   omni(0, 0, 0);
   omni(1, 0, 0);
   omni(2, 0, 0);
@@ -212,9 +218,11 @@ void readSerial() {
 
 void parseCommand(char* str){
   int cmdCode = atoi(str);
+  Serial.print("Serial cmdCode");
+  Serial.println(cmdCode);
 
-  if(isNewCmd) {
-    if(cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 166 || cmdCode == 300) {
+  if (isNewCmd) {
+    if(cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 166 || cmdCode == 300 || cmdCode == 400) {
       isNewCmd = false;
       lastCmd = cmdCode;
       return;
@@ -244,6 +252,9 @@ void parseCommand(char* str){
         break;
       case 300:
         newMotionCmd(str);
+        break;
+      case 400:
+        throwerCtrl(cmdCode);
         break;
     }
   }
@@ -535,8 +546,41 @@ void motorCtrl(int motorNr, int value) {
   value = value + SPEED_OFFSET;
   if (value > SPEED_MAX + SPEED_OFFSET) value = SPEED_MAX + SPEED_OFFSET;
   
+  Serial.print("Motor ctrl:");
+  Serial.println(value);
+  
   analogWrite(pwm_pin, value);
   digitalWrite(en_pin, HIGH);
+}
+
+void throwerHalt() {
+  throwerCtrl(0);
+}
+
+/* Thrower function for Zubax Myxa controller settings:
+rcpwm
+  ctl_mode 1
+  enable True
+  pulse
+    bot 0.000100000
+    hyst 2.00000e-05
+    mid 0.00180000
+    top 0.00200000
+  pulse dur nan
+  rescaled 0.0
+  ttl 0.3
+*/
+/* 0 will stop, positive will throw, negative will 'keep' */
+void throwerCtrl(int throwerControlValue) {
+    Serial.print("Thrower control value");
+    Serial.println(throwerControlValue);
+    return sendThrowerPwm(/*THROWER_HALT_PWM*/ 225 - throwerControlValue);  
+}
+
+void sendThrowerPwm(int pwm) {
+  Serial.print("Sending thrower pwm:");
+  Serial.println(pwm);
+  analogWrite(THROWER_PWM_PIN, pwm);
 }
 
 void solenoidCtrl(int value) {
