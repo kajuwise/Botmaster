@@ -5,7 +5,7 @@
 QT += network
 QT += gui
 QT += widgets
-TARGET = botmaster2013
+TARGET = botmaster
 CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
