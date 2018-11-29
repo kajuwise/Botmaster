@@ -164,7 +164,11 @@ void View::show(IplImage * image)
         break;
     case 'q':
         conf->keyS = key;
-        qDebug() << "Pressed q";
+        qDebug() << "Pressed Q";
+        break;
+    case 't':
+        conf->keyS = key;
+        qDebug() << "Pressed T";
         break;
     case 'p':
         cvSaveImage("frame.bmp", image);
@@ -172,7 +176,8 @@ void View::show(IplImage * image)
     case 'x':
         qDebug() << "Pressed X, ignoring.";
         break;
-    case 't':
+    case 'w':
+        qDebug() << "Take WB set to true";
         conf->takeWB = true;
     }
 
