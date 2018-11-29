@@ -218,11 +218,9 @@ void readSerial() {
 
 void parseCommand(char* str){
   int cmdCode = atoi(str);
-  Serial.print("Serial cmdCode");
-  Serial.println(cmdCode);
 
   if (isNewCmd) {
-    if(cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 166 || cmdCode == 300 || cmdCode == 400) {
+    if(cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 165 || cmdCode == 166 || cmdCode == 300) {
       isNewCmd = false;
       lastCmd = cmdCode;
       return;
@@ -247,14 +245,14 @@ void parseCommand(char* str){
       case 164:
         motorCtrl(2, cmdCode);
         break;
+      case 165:
+        throwerCtrl(cmdCode);
+        break;
       case 166:
         solenoidCtrl(cmdCode);
         break;
       case 300:
         newMotionCmd(str);
-        break;
-      case 400:
-        throwerCtrl(cmdCode);
         break;
     }
   }
@@ -572,14 +570,10 @@ rcpwm
 */
 /* 0 will stop, positive will throw, negative will 'keep' */
 void throwerCtrl(int throwerControlValue) {
-    Serial.print("Thrower control value");
-    Serial.println(throwerControlValue);
-    return sendThrowerPwm(/*THROWER_HALT_PWM*/ 225 - throwerControlValue);  
+    return sendThrowerPwm(THROWER_HALT_PWM - throwerControlValue);  
 }
 
 void sendThrowerPwm(int pwm) {
-  Serial.print("Sending thrower pwm:");
-  Serial.println(pwm);
   analogWrite(THROWER_PWM_PIN, pwm);
 }
 
