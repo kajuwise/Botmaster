@@ -24,6 +24,7 @@ public:
 	void solenoidTest();
     void instaTurn(int angle);
     void doThrowerTest();
+    void justThrow();
     void temporaryCrap();
     void sideStep(int relativeAngle, int distance);
     void readRobotAndFieldSwitches();

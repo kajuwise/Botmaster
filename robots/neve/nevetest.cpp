@@ -81,8 +81,12 @@ void NeveTest::go() {
 				}
 				break;
             case '3':
-                sprintf(str, "Button not assigned");
-				break;
+                sprintf(str, "Just throw");
+                if (conf.getSendCmdEnabled()) {
+                    justThrow();
+                    conf.setSendCmdEnabled(0);
+                }
+                break;
             case '4':
                 sprintf(str, "Instaturn left");
                 if (conf.getSendCmdEnabled()) {
@@ -114,6 +118,7 @@ void NeveTest::go() {
             case 'x':
                 setOmni(0,0,0);
                 setDcMotor(3,0);
+                msleep(50);
                 exit(2);
                 break;
             case 'l':
@@ -329,5 +334,11 @@ void NeveTest::doThrowerTest() {
         setDcMotor(3, speed);
         msleep(300);
    }
+}
+
+void NeveTest::justThrow() {
+    setDcMotor(3, 100);
+    msleep(5000);
+    setDcMotor(3, 0);
 }
 
