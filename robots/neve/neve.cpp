@@ -113,6 +113,7 @@ void Neve::go() {
 
     qDebug("Neve GO...\n");
     timer12.start();
+    setDcMotor(3,90);
 
     while (0) {
         conf.setSendCmdEnabled(1);
@@ -138,6 +139,7 @@ void Neve::go() {
         readRobotAndFieldSwitches();
         readRemoteCtrl();
         clearToKick = true;
+
         if (image->found_objects != NULL) {
             //findGoal
             findGoals();
@@ -204,16 +206,6 @@ void Neve::go() {
             if(!isDisplayImageRefreshedDuringRun) {
                 displayImageRefresh = false;
             }
-
-            // Time is up stopping the robot
-//            if (elapsed >= ROUND_TIME) {
-//                setOmni(0, 0, 0);
-//                conf.setSendCmdEnabled(0);
-//                kickCount = 0;
-//                state = WAITING_START;
-
-//                displayImageRefresh = true;
-//            }
         }
 
         if (state == ESCAPE_GOAL_TOO_CLOSE) {
@@ -754,18 +746,18 @@ void Neve::kickBall() {
 void Neve::printGoalInfo() {
     if (!infoMode) return;
 
-    cvPutText(_img, "Target goal:", cvPoint(_img->width/2-400, _img->height-60), &(image->font), CV_RGB(255,255,255));
-    cvPutText(_img, "Own goal:", cvPoint(_img->width/2-373, _img->height-30), &(image->font), CV_RGB(255,255,255));
+    cvPutText(_img, "Target basket:", cvPoint(_img->width/2-425, _img->height-60), &(image->font), CV_RGB(255,255,255));
+    cvPutText(_img, "Own basket:", cvPoint(_img->width/2-40, _img->height-30), &(image->font), CV_RGB(255,255,255));
 
     //in case of logical error - visible immediately
     if (goalTargetColor == BASKET_PURPLE) {
-        cvPutText(_img, "YELLOW", cvPoint(_img->width/2-245, _img->height-60), &(image->font), CV_RGB(255,255,0));
+        cvPutText(_img, "PURPLE", cvPoint(_img->width/2-245, _img->height-60), &(image->font), CV_RGB(255,0,255));
     } else if (goalTargetColor = BASKET_BLUE) {
         cvPutText(_img, "BLUE", cvPoint(_img->width/2-245, _img->height-60), &(image->font), CV_RGB(30,144,255));
     }
 
     if (goalOwnColor == BASKET_PURPLE) {
-        cvPutText(_img, "YELLOW", cvPoint(_img->width/2-245, _img->height-30), &(image->font), CV_RGB(255,255,0));
+        cvPutText(_img, "PURPLE", cvPoint(_img->width/2-245, _img->height-30), &(image->font), CV_RGB(255,0,255));
     } else if (goalOwnColor = BASKET_BLUE) {
         cvPutText(_img, "BLUE", cvPoint(_img->width/2-245, _img->height-30), &(image->font), CV_RGB(30,144,255));
     }
@@ -1154,7 +1146,7 @@ void Neve::checkKeyPressAction() {
         case 'r':
             getFrameFromCameraNr = CAMERA_RIGHT;
             break;
-        case 'y':
+        case 'p':
             goalTargetColor = BASKET_PURPLE;
             goalOwnColor = BASKET_BLUE;
             break;
