@@ -44,12 +44,6 @@ void NeveTest::solenoidTest() {
     setDcMotor(4, 0);
 }
 
-void NeveTest::dribblerTest() {
-	setDcMotor(3, 255);
-	msleep(5000);
-	setDcMotor(3, 0);
-}
-
 void NeveTest::go() {
     char selection = '0';
 	char str[50];
@@ -87,11 +81,7 @@ void NeveTest::go() {
 				}
 				break;
             case '3':
-				sprintf(str, "Dribbler test");
-				if (conf.getSendCmdEnabled()) {
-					dribblerTest();
-					conf.setSendCmdEnabled(0);
-				}
+                sprintf(str, "Button not assigned");
 				break;
             case '4':
                 sprintf(str, "Instaturn left");
@@ -123,6 +113,7 @@ void NeveTest::go() {
                 break;
             case 'x':
                 setOmni(0,0,0);
+                setDcMotor(3,0);
                 exit(2);
                 break;
             case 'l':
@@ -174,8 +165,16 @@ void NeveTest::go() {
 
                     conf.setSendCmdEnabled(0);
                 }
-
                 break;
+            case 't':
+                sprintf(str, "Thrower test");
+                if (conf.getSendCmdEnabled()) {
+                    qDebug() << "Will be performing thrower test";
+                    doThrowerTest();
+                    conf.setSendCmdEnabled(0);
+                }
+                break;
+
             default:
                sprintf(str, "No test selected");
 				break;
@@ -315,5 +314,22 @@ void NeveTest::distancePreserveTurn(int angle) {
 
     setOmni(0, 0, 0);
     msleep(10);
+}
+
+void NeveTest::doThrowerTest() {
+    int maxThrowingTestSpeed = 150;
+
+//    for (int speed = 0; speed<maxThrowingTestSpeed; speed=speed+10) {
+//        qDebug() << "Setting dc motor 3 speed to" << speed;
+//        setDcMotor(3, speed);
+//        msleep(300);
+//    }
+
+    setDcMotor(3,224);
+
+//    for (int speed = maxThrowingTestSpeed; speed>=0; speed=speed-10) {
+//        setDcMotor(3, speed);
+//        msleep(300);
+//    }
 }
 

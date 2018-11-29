@@ -22,8 +22,8 @@ public:
       	void msleep(long t) {usleep(t * 1000);}
 	void motorTest();
 	void solenoidTest();
-	void dribblerTest();
     void instaTurn(int angle);
+    void doThrowerTest();
     void temporaryCrap();
     void sideStep(int relativeAngle, int distance);
     void readRobotAndFieldSwitches();
@@ -33,6 +33,7 @@ public:
     void waitActionSignalFromRemoteCtrl(char action);
     bool isSignalTargeting(char action);
     void distancePreserveTurn(int angle);
+
 	  
 };
 #endif
