@@ -319,17 +319,15 @@ void NeveTest::distancePreserveTurn(int angle) {
 void NeveTest::doThrowerTest() {
     int maxThrowingTestSpeed = 150;
 
-//    for (int speed = 0; speed<maxThrowingTestSpeed; speed=speed+10) {
-//        qDebug() << "Setting dc motor 3 speed to" << speed;
-//        setDcMotor(3, speed);
-//        msleep(300);
-//    }
+    for (int speed = 0; speed<maxThrowingTestSpeed; speed=speed+10) {
+        qDebug() << "Setting dc motor 3 speed to" << speed;
+        setDcMotor(3, speed);
+        msleep(300);
+    }
 
-    setDcMotor(3,224);
-
-//    for (int speed = maxThrowingTestSpeed; speed>=0; speed=speed-10) {
-//        setDcMotor(3, speed);
-//        msleep(300);
-//    }
+   for (int speed = maxThrowingTestSpeed; speed>=0; speed=speed-10) {
+        setDcMotor(3, speed);
+        msleep(300);
+   }
 }
 
