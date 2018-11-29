@@ -25,8 +25,8 @@
 #define MIN_AREA 20
 
 #define BALL            1
-#define GOAL_YELLOW     2
-#define GOAL_BLUE       3
+#define BASKET_PURPLE     2
+#define BASKET_BLUE       3
 #define FIELD_EDGE_R    4
 #define FIELD_EDGE_L    5
 #define IMAGE_WIDTH     1280
@@ -34,7 +34,8 @@
 /**
  * @brief This class holds image processing functionality
  * @author Valdur Kaldvee
- * @author Margus Ernits <margus.ernits@itcollege.ee>
+ * @author Margus Ernits
+ * @author Erik Kaju
  */
 class Image{
 public:
@@ -67,7 +68,8 @@ public:
     int fps; ///< FPS (Frames per second) value that is printed on the image.
 protected:
     CvScalar colorBall;
-    CvScalar colorGoal;
+    CvScalar colorBasketPurple;
+    CvScalar colorBasketBlue;
 
 
 private:

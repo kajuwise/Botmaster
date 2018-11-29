@@ -6,9 +6,10 @@
  *
  * Copyright: See COPYING file that comes with this distribution
  *
- * @author Valdur Kaldvee (C) 2011
- * @author Margus Ernits <margus.ernits@itcollege.ee>, (C) 2008
- * @author Mauno Pihelgas <mpihelga@itcollege.ee>, (C) 2010
+ * @author Valdur Kaldvee
+ * @author Margus Ernits
+ * @author Mauno Pihelgas
+ * @author Erik Kaju
  */
 #include "image.h"
 #include <stdio.h>
@@ -52,10 +53,8 @@ Image::Image()
     colorBall.val[2] = 255;
     colorBall.val[3] = 0;
 
-    colorGoal.val[0] = 255;
-    colorGoal.val[1] = 0;
-    colorGoal.val[2] = 255;
-    colorGoal.val[3] = 0;
+    colorBasketPurple = CV_RGB(255,0,255);
+    colorBasketBlue = CV_RGB(0,255,255);
 
     double hScale = 1.0;
     double vScale = 1.0;
@@ -559,7 +558,7 @@ void Image::findGoal(IplImage* img, IplImage* work, IplImage* binary, ObjectType
                 obj.rect = cvBoundingRect(contours, 0);
 
                 obj.type = itemType;
-                color = colorGoal;
+                color = itemType == BASKET_PURPLE ? colorBasketPurple : colorBasketBlue;
 
                 obj.center.x = obj.rect.x+obj.rect.width / 2;
                 obj.center.y = obj.rect.y+obj.rect.height / 2;
@@ -1160,11 +1159,11 @@ void Image::process(int* fieldTop) {
 
     if(field->total) {
         VisionTime::DO()->markBegin("findYellowGoal");
-        findGoal(img, work, binary, *(conf->getYellow()), GOAL_YELLOW, field, goalYellowHull);
+        findGoal(img, work, binary, *(conf->getYellow()), BASKET_PURPLE, field, goalYellowHull);
         VisionTime::DO()->markEnd("findYellowGoal");
 
         VisionTime::DO()->markBegin("findBlueGoal");
-        findGoal(img, work, binary, *(conf->getBlue()), GOAL_BLUE, field, goalBlueHull);
+        findGoal(img, work, binary, *(conf->getBlue()), BASKET_BLUE, field, goalBlueHull);
         VisionTime::DO()->markEnd("findBlueGoal");
 
         VisionTime::DO()->markBegin("findBall");
