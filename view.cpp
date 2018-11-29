@@ -171,10 +171,15 @@ void View::show(IplImage * image)
         qDebug() << "Pressed T";
         break;
     case 'p':
-        cvSaveImage("frame.bmp", image);
+        conf->keyS = key;
+        qDebug() << "Pressed P";
+        break;
+    case 's':
+        cvSaveImage(((QString)(QString("screenshot_") + QDateTime::currentDateTime().toString(QString("dd:MMM:yyyy_hh:mm:ss")) + QString(".bmp"))).toLocal8Bit().data(), image);
         break;
     case 'x':
-        qDebug() << "Pressed X, ignoring.";
+        conf->keyS = key;
+        qDebug() << "Pressed X";
         break;
     case 'w':
         qDebug() << "Take WB set to true";
