@@ -25,79 +25,72 @@ ImageCalibrationTool::ImageCalibrationTool()
   QObject::connect(doNotPressAction, SIGNAL(triggered()), this, SLOT(helpMenuDoNotPress()));
    */
 
-  //Green widget and layout
-  QVBoxLayout *greenTabLayout = new QVBoxLayout();
+  QVBoxLayout *fieldTabLayout = new QVBoxLayout();
   QWidget * greenTabWidget= new QWidget();
-  greenTabWidget->setLayout(greenTabLayout);
+  greenTabWidget->setLayout(fieldTabLayout);
 
-  //Orange widget and layout
-  QVBoxLayout *orangeTabLayout = new QVBoxLayout();
+  QVBoxLayout *ballTabLayout = new QVBoxLayout();
   QWidget * orangeTabWidget= new QWidget();
-  orangeTabWidget->setLayout(orangeTabLayout);
+  orangeTabWidget->setLayout(ballTabLayout);
 
-  //Blue widget and layout
-  QVBoxLayout *blueTabLayout = new QVBoxLayout();
+  QVBoxLayout *blueGoalTabLayout = new QVBoxLayout();
   QWidget * blueTabWidget= new QWidget();
-  blueTabWidget->setLayout(blueTabLayout);
+  blueTabWidget->setLayout(blueGoalTabLayout);
 
-  //Yellow widget and layout
-  QVBoxLayout *yellowTabLayout = new QVBoxLayout();
+  QVBoxLayout *purpleGoalTabLayout = new QVBoxLayout();
   QWidget * yellowTabWidget= new QWidget();
-  yellowTabWidget->setLayout(yellowTabLayout);
+  yellowTabWidget->setLayout(purpleGoalTabLayout);
 
-  //Undefined tab widget and layout
   QVBoxLayout *undefinedTabLayout = new QVBoxLayout();
   QWidget * undefinedTabWidget = new QWidget();
   undefinedTabWidget->setLayout(undefinedTabLayout);
 
-  //WhiteBalance widget and layout
   QVBoxLayout *whiteBalanceTabLayout = new QVBoxLayout();
   QWidget * whiteBalanceTabWidget= new QWidget();
   whiteBalanceTabWidget->setLayout(whiteBalanceTabLayout);
 
-  //Black widget and layout
   QVBoxLayout *blackTabLayout = new QVBoxLayout();
   QWidget * blackTabWidget= new QWidget();
   blackTabWidget->setLayout(blackTabLayout );
 
   //Add widgets to tabs
-  centralWidget->addTab(blueTabWidget, QString("Blue"));
-  centralWidget->addTab(yellowTabWidget, QString("Yellow"));
-  centralWidget->addTab(greenTabWidget, QString("Green"));
-  centralWidget->addTab(orangeTabWidget, QString("Orange"));
+  centralWidget->addTab(blueTabWidget, QString("Blue Goal"));
+  centralWidget->addTab(yellowTabWidget, QString("Purple Goal"));
+  centralWidget->addTab(greenTabWidget, QString("Field"));
+  centralWidget->addTab(orangeTabWidget, QString("Ball"));
   centralWidget->addTab(blackTabWidget, QString("Black"));
   centralWidget->addTab(whiteBalanceTabWidget, QString("White Balance"));
   centralWidget->addTab(undefinedTabWidget, QString("Undefined"));
 
   //ADD CALIBRATION ROWS HERE
   //ARGUMENT SYNTAX: 1) Visible name of slider (string) 2) parameter in conf (int*) 3)parameter name in conf file (string) 4) tab (QVBoxLayout)
-  new ImageCalibrationItem("Blue Hue Min", &(conf->getBlue()->hMin), "blue.hMin", blueTabLayout);
-  new ImageCalibrationItem("Blue Hue Max", &(conf->getBlue()->hMax), "blue.hMax", blueTabLayout);
-  new ImageCalibrationItem("Blue Sat Min", &(conf->getBlue()->sMin), "blue.sMin", blueTabLayout);
-  new ImageCalibrationItem("Blue Sat Min", &(conf->getBlue()->sMax), "blue.sMax", blueTabLayout);
-  new ImageCalibrationItem("Blue Light Min", &(conf->getBlue()->lMin), "blue.lMin", blueTabLayout);
-  new ImageCalibrationItem("Blue Light Max", &(conf->getBlue()->lMax), "blue.lMax", blueTabLayout);
+  new ImageCalibrationItem("Blue Goal Hue Min", &(conf->getBlue()->hMin), "blue.hMin", blueGoalTabLayout);
+  new ImageCalibrationItem("Blue Goal Hue Max", &(conf->getBlue()->hMax), "blue.hMax", blueGoalTabLayout);
+  new ImageCalibrationItem("Blue Goal Sat Min", &(conf->getBlue()->sMin), "blue.sMin", blueGoalTabLayout);
+  new ImageCalibrationItem("Blue Goal Sat Min", &(conf->getBlue()->sMax), "blue.sMax", blueGoalTabLayout);
+  new ImageCalibrationItem("Blue Goal Light Min", &(conf->getBlue()->lMin), "blue.lMin", blueGoalTabLayout);
+  new ImageCalibrationItem("Blue Goal Light Max", &(conf->getBlue()->lMax), "blue.lMax", blueGoalTabLayout);
 
-  new ImageCalibrationItem("Yellow Hue Min", &(conf->getYellow()->hMin), "yellow.hMin", yellowTabLayout);
-  new ImageCalibrationItem("Yellow Hue Max", &(conf->getYellow()->hMax), "yellow.hMax", yellowTabLayout);
-  new ImageCalibrationItem("Yellow Sat Min", &(conf->getYellow()->sMin), "yellow.sMin", yellowTabLayout);
-  new ImageCalibrationItem("Yellow Sat Max", &(conf->getYellow()->sMax), "yellow.sMax", yellowTabLayout);
-  new ImageCalibrationItem("Yellow Light Min", &(conf->getYellow()->lMin), "yellow.lMin", yellowTabLayout);
-  new ImageCalibrationItem("Yellow Light Max", &(conf->getYellow()->lMax), "yellow.lMax", yellowTabLayout);
+  new ImageCalibrationItem("Purple Goal Hue Min", &(conf->getYellow()->hMin), "yellow.hMin", purpleGoalTabLayout);
+  new ImageCalibrationItem("Purple Goal Hue Max", &(conf->getYellow()->hMax), "yellow.hMax", purpleGoalTabLayout);
+  new ImageCalibrationItem("Purple Goal Sat Min", &(conf->getYellow()->sMin), "yellow.sMin", purpleGoalTabLayout);
+  new ImageCalibrationItem("Purple Goal Sat Max", &(conf->getYellow()->sMax), "yellow.sMax", purpleGoalTabLayout);
+  new ImageCalibrationItem("Purple Goal Goal Light Min", &(conf->getYellow()->lMin), "yellow.lMin", purpleGoalTabLayout);
+  new ImageCalibrationItem("Yellow Light Max", &(conf->getYellow()->lMax), "yellow.lMax", purpleGoalTabLayout);
 
-  new ImageCalibrationItem("Orange Hue Min", &(conf->getOrange()->hMin), "orange.hMin", orangeTabLayout);
-  new ImageCalibrationItem("Orange Hue Max", &(conf->getOrange()->hMax), "orange.hMax", orangeTabLayout);
-  new ImageCalibrationItem("Orange Sat Min", &(conf->getOrange()->sMin), "orange.sMin", orangeTabLayout);
-  new ImageCalibrationItem("Orange Sat Max", &(conf->getOrange()->sMax), "orange.sMax", orangeTabLayout);
-  new ImageCalibrationItem("Orange Light Min", &(conf->getOrange()->lMin), "orange.lMin", orangeTabLayout);
-  new ImageCalibrationItem("Orange Light Max", &(conf->getOrange()->lMax), "orange.lMax", orangeTabLayout);
+  new ImageCalibrationItem("Ball Hue Min", &(conf->getOrange()->hMin), "orange.hMin", ballTabLayout);
+  new ImageCalibrationItem("Ball Hue Max", &(conf->getOrange()->hMax), "orange.hMax", ballTabLayout);
+  new ImageCalibrationItem("Ball Sat Min", &(conf->getOrange()->sMin), "orange.sMin", ballTabLayout);
+  new ImageCalibrationItem("Ball Sat Max", &(conf->getOrange()->sMax), "orange.sMax", ballTabLayout);
+  new ImageCalibrationItem("Ball Light Min", &(conf->getOrange()->lMin), "orange.lMin", ballTabLayout);
+  new ImageCalibrationItem("Ball Light Max", &(conf->getOrange()->lMax), "orange.lMax", ballTabLayout);
 
-  new ImageCalibrationItem("Green Hue Min", &(conf->getGreen()->hMin), "green.hMin", greenTabLayout);
-  new ImageCalibrationItem("Green Hue Max", &(conf->getGreen()->hMax), "green.hMax", greenTabLayout);
-  new ImageCalibrationItem("Green Sat Min", &(conf->getGreen()->sMin), "green.sMin", greenTabLayout);
-  new ImageCalibrationItem("Green Sat Max", &(conf->getGreen()->sMax), "green.sMax", greenTabLayout);
-  new ImageCalibrationItem("Green Light Min", &(conf->getGreen()->lMin), "green.lMin", greenTabLayout);
-  new ImageCalibrationItem("Green Light Max", &(conf->getGreen()->lMax), "green.lMax", greenTabLayout);
+  new ImageCalibrationItem("Field Hue Min", &(conf->getGreen()->hMin), "green.hMin", fieldTabLayout);
+  new ImageCalibrationItem("Field Hue Max", &(conf->getGreen()->hMax), "green.hMax", fieldTabLayout);
+  new ImageCalibrationItem("Field Sat Min", &(conf->getGreen()->sMin), "green.sMin", fieldTabLayout);
+  new ImageCalibrationItem("Field Sat Max", &(conf->getGreen()->sMax), "green.sMax", fieldTabLayout);
+  new ImageCalibrationItem("Field Light Min", &(conf->getGreen()->lMin), "green.lMin", fieldTabLayout);
+  new ImageCalibrationItem("Field Light Max", &(conf->getGreen()->lMax), "green.lMax", fieldTabLayout);
 
   new ImageCalibrationItem("Black Hue Min", &(conf->getBlack()->hMin), "black.hMin", blackTabLayout);
   new ImageCalibrationItem("Black Hue Max", &(conf->getBlack()->hMax), "black.hMax", blackTabLayout);
