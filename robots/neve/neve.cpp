@@ -4,7 +4,7 @@
 // Description: 
 //
 //
-// Author: Valdur Kaldvee, Erik Kaju, Indrek Tamm (C) 2010-2016
+// Author: Valdur Kaldvee, Erik Kaju, Indrek Tamm (C) 2010-2018
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -43,8 +43,8 @@ int goalSpinDirection = 1;
 int leftCamAngleDiff = -80;
 int rightCamAngleDiff = 82;
 
-int goalTargetColor = GOAL_YELLOW;
-int goalOwnColor = GOAL_BLUE;
+int goalTargetColor = BASKET_PURPLE;
+int goalOwnColor = BASKET_BLUE;
 
 Config & conf = Config::getConfig();
 
@@ -70,13 +70,6 @@ const char* getFrameFromCameraNr = CAMERA_FRONT;
 
 QTime timerLastDistronicTurn;
 QTime inCurrentStateTime;
-
-// TODO refactor state machine WIP
-// TODO make solid contact with ball when close to goal should just shoot
-// TODO TEST
-// TODO fine tune approaching balls in edges
-// TODO test attacking goals from very narrow angles/totally from sides
-// TODO camera sensor USB plug strengthening DONE
 
 //
 //
@@ -765,15 +758,15 @@ void Neve::printGoalInfo() {
     cvPutText(_img, "Own goal:", cvPoint(_img->width/2-373, _img->height-30), &(image->font), CV_RGB(255,255,255));
 
     //in case of logical error - visible immediately
-    if (goalTargetColor == GOAL_YELLOW) {
+    if (goalTargetColor == BASKET_PURPLE) {
         cvPutText(_img, "YELLOW", cvPoint(_img->width/2-245, _img->height-60), &(image->font), CV_RGB(255,255,0));
-    } else if (goalTargetColor = GOAL_BLUE) {
+    } else if (goalTargetColor = BASKET_BLUE) {
         cvPutText(_img, "BLUE", cvPoint(_img->width/2-245, _img->height-60), &(image->font), CV_RGB(30,144,255));
     }
 
-    if (goalOwnColor == GOAL_YELLOW) {
+    if (goalOwnColor == BASKET_PURPLE) {
         cvPutText(_img, "YELLOW", cvPoint(_img->width/2-245, _img->height-30), &(image->font), CV_RGB(255,255,0));
-    } else if (goalOwnColor = GOAL_BLUE) {
+    } else if (goalOwnColor = BASKET_BLUE) {
         cvPutText(_img, "BLUE", cvPoint(_img->width/2-245, _img->height-30), &(image->font), CV_RGB(30,144,255));
     }
 
@@ -878,10 +871,12 @@ void Neve::getGoalAimDirection(State state) {
 }
 
 void Neve::getObjectCalc(Image::Object* object, float* distance, float* angle, const char* cameraDevice) {
-    float b, ballDistanceY, ballDistanceX;
+    float b, distanceY, distanceX;
     char str[50];
 
-    ballDistanceY = 47024.33 * pow((float) object->center.y, -1.33);
+    // See calculation_formulas.odc
+    // 212129.24887416 X ^ -1.5745456297
+    distanceY = 212129.24887416 * pow((float) object->rect.y+object->rect.height, -1.5745456297);
 
     float tanHalfCameraAngle = 0.0;
     float increaseAngle = 0.0;
@@ -901,13 +896,13 @@ void Neve::getObjectCalc(Image::Object* object, float* distance, float* angle, c
         exit(1);
     }
 
-    b = tanHalfCameraAngle * ballDistanceY;
+    b = tanHalfCameraAngle * distanceY;
 
     float magicConstant = 1.05;
     // resolution width 1280
-    ballDistanceX = (object->distanceH / 640.0) * b * magicConstant;
+    distanceX = (object->distanceH / 640.0) * b * magicConstant;
 
-    *distance = sqrt(pow(fabs(ballDistanceX), 2.0) + pow(fabs(ballDistanceY), 2.0));
+    *distance = sqrt(pow(fabs(distanceX), 2.0) + pow(fabs(distanceY), 2.0));
 
     if(cameraDevice == CAMERA_LEFT || cameraDevice == CAMERA_RIGHT) {
         //morphing front cam specific distance calculation into side cam
@@ -926,10 +921,10 @@ void Neve::getObjectCalc(Image::Object* object, float* distance, float* angle, c
         }
     }
 
-    *angle = (atan(ballDistanceX / ballDistanceY) * 180 / M_PI) + increaseAngle;
+    *angle = (atan(distanceX / distanceY) * 180 / M_PI) + increaseAngle;
 
-    object->distanceHCm = ballDistanceX;
-    object->distanceVCm = ballDistanceY;
+    object->distanceHCm = distanceX;
+    object->distanceVCm = distanceY;
 }
 
 void Neve::getCvPointCalc(CvPoint* inputCvPoint, float* distance, float* angle, const char* cameraDevice) {
@@ -1099,17 +1094,40 @@ void Neve::printBallStats(Image::Object * obj, float* angle, float* distance, bo
             sprintf(str, "Dist: %.0fcm", *distance);
             cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 27), &(image->font), color);
 
-            sprintf(str, "DisV: %dpx", obj->distanceV);
-            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 60), &(image->font), color);
+            sprintf(str, "Dis center Y: %dpx", obj->center.y);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 47), &(image->font), color);
 
-            sprintf(str, "DisH: %dpx", obj->distanceH);
-            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 80), &(image->font), color);
+            sprintf(str, "Dis lowest rect Y: %dpx", obj->rect.y+obj->rect.height);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 67), &(image->font), color);
 
-            sprintf(str, "DisVcm: %dcm", obj->distanceVCm);
-            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 100), &(image->font), color);
+            sprintf(str, "Dis center X: %dpx", obj->center.x);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 87), &(image->font), color);
 
-            sprintf(str, "DisHcm: %dcm", obj->distanceHCm);
-            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 120), &(image->font), color);
+
+        }
+    }
+}
+
+void Neve::printBasketStats(Image::Object * obj, float* angle, float* distance) {
+    if (obj->area != 0) {
+        CvScalar color = CV_RGB(0, 0, 0);
+        if (infoMode) {
+            sprintf(str, "Angl: %.1f*", *angle);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 7), &(image->font), color);
+
+            sprintf(str, "Dist: %.0fcm", *distance);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 27), &(image->font), color);
+
+            sprintf(str, "Dis center Y: %dpx", obj->center.y);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 47), &(image->font), color);
+
+            sprintf(str, "Dis lowest rect Y: %dpx", obj->rect.y+obj->rect.height);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 67), &(image->font), color);
+
+            sprintf(str, "Dis center X: %dpx", obj->center.x);
+            cvPutText(_img, str, cvPoint(obj->rect.x, obj->rect.y + 87), &(image->font), color);
+
+
         }
     }
 }
@@ -1137,12 +1155,12 @@ void Neve::checkKeyPressAction() {
             getFrameFromCameraNr = CAMERA_RIGHT;
             break;
         case 'y':
-            goalTargetColor = GOAL_YELLOW;
-            goalOwnColor = GOAL_BLUE;
+            goalTargetColor = BASKET_PURPLE;
+            goalOwnColor = BASKET_BLUE;
             break;
         case 'b':
-            goalTargetColor = GOAL_BLUE;
-            goalOwnColor = GOAL_YELLOW;
+            goalTargetColor = BASKET_BLUE;
+            goalOwnColor = BASKET_PURPLE;
             break;
         case 'g': {
             int oldTargetColor = goalTargetColor;
@@ -1152,6 +1170,7 @@ void Neve::checkKeyPressAction() {
         }
         case 'x': {
             setOmni(0,0,0);
+            setDcMotor(3,0);
             exit(2);
             break;
         }
@@ -1340,20 +1359,16 @@ void Neve::findGoals() {
     for (int i = 0; i < potentialTargetGoals->total; i++) {
         obj = (Image::Object*) cvGetSeqElem(potentialTargetGoals, i);
 
-//        CvPoint leftUpper; // TODO maybe delete
-//        leftUpper.x = obj->rect.x;
-//        leftUpper.y = obj->rect.y;
-
-//        CvPoint rightLower;
-//        rightLower.x = obj->rect.x + obj->rect.width;
-//        rightLower.y = obj->rect.y + obj->rect.height;
-
-//        cvDrawRect(_img, leftUpper, rightLower, CV_RGB(64,120,170), 3);
-
         if (obj->area > goalTarget.area) {
             goalTarget = *obj;
         }
     }
+
+// Uncomment to print goal stats
+//    float goalDistance = 0.0;
+//    float goalAngle = 0.0;
+//    getObjectCalc(&goalTarget, &goalDistance, &goalAngle, CAMERA_FRONT);
+//    printBasketStats(&goalTarget, &goalAngle, &goalDistance);
 
     //Find biggest own goal
     for (int i = 0; i < potentialOwnGoals->total; i++) {
@@ -1363,16 +1378,6 @@ void Neve::findGoals() {
             goalOwn = *obj;
         }
     }
-
-//    CvPoint leftUpper1; // TODO maybe delete
-//    leftUpper1.x = goalTarget.rect.x;
-//    leftUpper1.y = goalTarget.rect.y;
-
-//    CvPoint rightLower1;
-//    rightLower1.x = goalTarget.rect.x + goalTarget.rect.width;
-//    rightLower1.y = goalTarget.rect.y + goalTarget.rect.height;
-
-//    cvDrawRect(_img, leftUpper1, rightLower1, CV_RGB(255,120,170), 3);
 }
 
 void Neve::readRobotAndFieldSwitches() {

@@ -68,6 +68,7 @@ public:
     void temporaryCrap();
     void checkKeyPressAction();
     void printBallStats(Image::Object * obj, float* angle, float* distance, bool targetBall);
+    void printBasketStats(Image::Object * obj, float* angle, float* distance);
     void decideInstaTurnToGetBall(bool oneEightyIfNowhereFound);
     void printCameraSource(const char* camera, bool blind);
     void showCurrentImage();
