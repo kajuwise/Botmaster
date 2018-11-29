@@ -111,9 +111,13 @@ void Neve::go() {
     QTime timer_escapeBlackLine;
     QTime timer_turnSpeed;
 
+    //Start thrower right away
+    conf.setSendCmdEnabled(1);
+    setDcMotor(3,90);
+    conf.setSendCmdEnabled(0);
+
     qDebug("Neve GO...\n");
     timer12.start();
-    setDcMotor(3,90);
 
     while (0) {
         conf.setSendCmdEnabled(1);
@@ -1161,6 +1165,7 @@ void Neve::checkKeyPressAction() {
             break;
         }
         case 'x': {
+            conf.setSendCmdEnabled(1);
             setOmni(0,0,0);
             setDcMotor(3,0);
             exit(2);

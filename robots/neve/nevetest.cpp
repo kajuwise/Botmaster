@@ -4,7 +4,7 @@
 // Description: 
 //
 //
-// Author: Valdur Kaldvee, Erik Kaju, Indrek Tamm (C) 2010-2016
+// Author: Valdur Kaldvee, Erik Kaju, Indrek Tamm (C) 2010-2018
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -116,9 +116,9 @@ void NeveTest::go() {
                 }
                 break;
             case 'x':
+                conf.setSendCmdEnabled(1);
                 setOmni(0,0,0);
                 setDcMotor(3,0);
-                msleep(50);
                 exit(2);
                 break;
             case 'l':

@@ -4,7 +4,7 @@
 // Description: 
 //
 //
-// Author: Valdur Kaldvee, Margus Ernits <margus.ernits@itcollege.ee>, (C) 2008
+// Author: Valdur Kaldvee, Margus Ernits, Erik Kaju
 //
 // Copyright: See COPYING file that comes with this distribution
 //
