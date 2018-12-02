@@ -10,16 +10,24 @@
 //
 //
 
+#include "robottesttool.h"
 #include "nevetest.h"
 #include <QTime>
 #include <QDebug>
 #include <iostream>
 #include <math.h>
 
+#include <QMessageBox>
+#include <QMenu>
+#include <QAction>
+
 using namespace std;
+RobotTestTool *robotTestToolWindow;
 
 NeveTest::NeveTest()
 {
+    robotTestToolWindow = new RobotTestTool(&omniTestDirDeg, &omniTestVelocityBody, &omniTestVelocityAngular, &throwerTestPwm);
+    robotTestToolWindow->setWindowTitle(QString::fromUtf8("Robot test tool"));
 }
 
 NeveTest::~NeveTest()
@@ -56,14 +64,32 @@ void NeveTest::go() {
     int fieldTop[1280];
     temporaryCrap();
     const char* getFrameFromCameraNr = CAMERA_FRONT;
+
+    conf.setSendCmdEnabled(1);
+    setOmni(0,0,0);
+    setDcMotor(3,0);
+    conf.setSendCmdEnabled(0);
+
     while(1) {
-		requestSensors();
+        requestSensors();
         readRobotAndFieldSwitches();
         readRemoteCtrl();
         _img = image->getFrame(getFrameFromCameraNr);
         image->process(fieldTop);
 		getSensorsResponse();
 		
+        if (abs(omniTestDirDeg) > 0 || abs(omniTestVelocityBody) >> 0 || abs(omniTestVelocityAngular) > 0) {
+            conf.setSendCmdEnabled(1);
+            setOmni(omniTestDirDeg, omniTestVelocityBody, omniTestVelocityAngular);
+            conf.setSendCmdEnabled(0);
+        }
+
+        if (abs(throwerTestPwm) > 0) {
+            conf.setSendCmdEnabled(1);
+            setDcMotor(3, throwerTestPwm);
+            conf.setSendCmdEnabled(0);
+        }
+
 		selection = conf.keyS;
 		switch(selection) {
             case '1':
@@ -136,40 +162,28 @@ void NeveTest::go() {
             case 'a':
                 sprintf(str, "Distronic turn (circling)");
                 if (conf.getSendCmdEnabled()) {
-                    distancePreserveTurn(0);
-                    distancePreserveTurn(25);
-                    distancePreserveTurn(42);
-                    distancePreserveTurn(52);
-                    distancePreserveTurn(60);
-                    distancePreserveTurn(68);
-                    distancePreserveTurn(79);
-                    distancePreserveTurn(90);
-                    distancePreserveTurn(115);
-                    distancePreserveTurn(125);
-                    distancePreserveTurn(160);
-                    distancePreserveTurn(180);
-                    distancePreserveTurn(-0);
-                    distancePreserveTurn(-25);
-                    distancePreserveTurn(-42);
-                    distancePreserveTurn(-52);
-                    distancePreserveTurn(-60);
-                    distancePreserveTurn(-68);
-                    distancePreserveTurn(-79);
-                    distancePreserveTurn(-90);
-                    distancePreserveTurn(-115);
-                    distancePreserveTurn(-125);
-                    distancePreserveTurn(-160);
-                    distancePreserveTurn(-180);
-                    distancePreserveTurn(-360);
-                    distancePreserveTurn(360);
-                    distancePreserveTurn(725);
-                    distancePreserveTurn(950);
-                    distancePreserveTurn(-270);
-                    distancePreserveTurn(270);
-                    distancePreserveTurn(300);
+//                    distancePreserveTurn(90);
+
+//                    setOmni(-83, abs(30), 30);
+                    //setOmni(-83, abs(60), 30);
+
+                    setOmni(0,0,65);
+                    msleep(400);
+                    setOmni(0,0,0);
+//                    distancePreserveTurn(-90);
 
                     conf.setSendCmdEnabled(0);
                 }
+                break;
+
+            case 'm':
+                sprintf(str, "Opened test tool menu");
+                if (robotTestToolWindow->isVisible()) {
+                    robotTestToolWindow->close();
+                } else {
+                    robotTestToolWindow->show();
+                }
+                conf.keyS = NULL;
                 break;
             case 't':
                 sprintf(str, "Thrower test");
@@ -311,9 +325,10 @@ void NeveTest::distancePreserveTurn(int angle) {
 
     int duration = 7.1369346734*angle+30.1344221106; //175.9303173589 * exp(0.0155098758 * angle);
 
-    setDcMotor(0, 0);
-    setDcMotor(1, 0);
-    setDcMotor(2, turnSpeed);
+//    setDcMotor(0, 15);
+//    setDcMotor(1, 15);
+//    setDcMotor(2, turnSpeed);
+
     qDebug() << "ORIGINAL ANGLE:" << originalAngle << ", TURN ANGLE:" << angle << ", DURATION:" << duration << ", turning" << (turnSpeed > 0 ? "right" : "left");
     msleep(duration);
 
@@ -341,4 +356,6 @@ void NeveTest::justThrow() {
     msleep(5000);
     setDcMotor(3, 0);
 }
+
+
 
