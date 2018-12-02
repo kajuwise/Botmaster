@@ -83,10 +83,16 @@ squareCut=-1; // -1 do disable
    WB_kg = settings.value("WB_kg").toInt();
    WB_kr = settings.value("WB_kr").toInt();
 
+   blackout.throwerXFrom = settings.value("blackout.thrower.x.from").toInt();
+   blackout.throwerXTo = settings.value("blackout.thrower.x.to").toInt();
+   blackout.throwerY = settings.value("blackout.thrower.y").toInt();
+   blackout.cornerLeftX = settings.value("blackout.corner.left.x").toInt();
+   blackout.cornerLeftY = settings.value("blackout.corner.left.y").toInt();
+   blackout.cornerRightX = settings.value("blackout.corner.right.x").toInt();
+   blackout.cornerRightY = settings.value("blackout.corner.right.y").toInt();
+
     keyS = '-';
-
     showImage=0;
-
     saveImage=0;
 }
 
