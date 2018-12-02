@@ -13,7 +13,7 @@ class ImageCalibrationItem : QObject
   Q_OBJECT
 
   public:
-    ImageCalibrationItem(const std::string&, int *, const std::string&, QLayout *);
+    ImageCalibrationItem(const std::string&, int *, const std::string&, QLayout *, int, int);
 
     ~ ImageCalibrationItem(){};
 

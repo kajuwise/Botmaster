@@ -1,7 +1,7 @@
 #include "imagecalibrationitem.h"
 #include "config.h"
 
-ImageCalibrationItem::ImageCalibrationItem(const std::string& showName, int * paramValue, const std::string& paramName, QLayout * layout)
+ImageCalibrationItem::ImageCalibrationItem(const std::string& showName, int * paramValue, const std::string& paramName, QLayout * layout, int min, int max)
 {
   //Init: host UI layout(tab), pointer to conf parameter, name of parameter in ini file
   rowHostLayout = layout;
@@ -14,8 +14,8 @@ ImageCalibrationItem::ImageCalibrationItem(const std::string& showName, int * pa
 
   //Slider
   slider = new QSlider(Qt::Horizontal);
-  slider->setMinimum(0);
-  slider->setMaximum(255);
+  slider->setMinimum(min);
+  slider->setMaximum(max);
   slider->setValue(*param);
   slider->setMinimumWidth(200);
 

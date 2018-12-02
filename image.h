@@ -113,7 +113,10 @@ private:
     Camera cam; ///< Camera object
     void fastCvtColor(IplImage* , CvMat* );
     void fastCvtColor(IplImage*, IplImage*, CvMat* );
+    void fastCvtColorFraction(IplImage*, IplImage*, CvMat*, int, int, bool);
     void fastCvtColorFraction(IplImage*, IplImage*, CvMat*, int, int);
+    void fastCvtColorFractionWithBlackout(IplImage*, IplImage*, CvMat*, int, int);
+
 
     void findBall(IplImage*, IplImage*, IplImage*, ObjectType, int, CvSeq*, CvSeq*, CvSeq*, int*);
     void findGoal(IplImage*, IplImage*, IplImage*, ObjectType, int, CvSeq*, CvSeq*);
