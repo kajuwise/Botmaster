@@ -146,6 +146,10 @@ void View::show(IplImage * image)
         conf->keyS = key;
         qDebug() << "Pressed R";
         break;
+    case 'm':
+        conf->keyS = key;
+        qDebug() << "Pressed M";
+        break;
     case 'y':
         conf->keyS = key;
         qDebug() << "Pressed Y";
