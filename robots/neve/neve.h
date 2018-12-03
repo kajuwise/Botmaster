@@ -50,7 +50,7 @@ public:
     void setState(State newState);
 	void msleep(long t) {usleep(t * 1000);}
 	int round(float);
-	void kickBall();
+	void resetRemoteCtrl();
     void printGoalInfo();
     void getObjectCalc(Image::Object* ball, float* distance, float* angle, const char* cameraDevice);
     void getCvPointCalc(CvPoint* inputCvPoint, float* distance, float* angle, const char* cameraDevice);
@@ -90,6 +90,7 @@ private:
     BallState getBallSocketState() const;
     bool isCloseToGoal() const;
     void setThrowerSpeedIfBasketIsSeen();
+    float getThrowAngleCorrectionRelativeToField();
 
 
 private:

@@ -19,8 +19,7 @@
 
 //#define _GLIBCXX_USE_CXX11_ABI 0 //indrek, what is it?
 
-#define BEAM_VALUE_BALL_IN_SOCKET 750
-#define BEAM_NO_BALL 650
+#define BEAM_VALUE_BALL_IN_SOCKET 250
 
 #define GOAL_CLOSE 270
 #define BLACK_LINE 850
@@ -67,7 +66,7 @@ bool waitingSecondClick = false;
 bool clearToKick = false;
 bool listeningToRemote = false;
 bool mustRun = false;
-bool isDisplayImageRefreshedDuringRun = true; //set to false if you want to disable image refreshing
+bool isDisplayImageRefreshedDuringRun = false; //set to false if you want to disable image refreshing
 //
 
 // Is true until state is not WAITING_START anymore
@@ -82,6 +81,7 @@ int pwmTestValue = 30;
 
 QTime timerLastDistronicTurn;
 QTime inCurrentStateTime;
+bool allowedtoGetThrowAngleCorrectionRelativeToField;
 
 //
 //
@@ -90,6 +90,7 @@ QTime inCurrentStateTime;
 //
 
 QTime timerUnableCenterBallAndBasket;
+float angleCorrectionDueToFieldPosition;
 
 
 Neve::Neve()
@@ -128,11 +129,13 @@ void Neve::go() {
     QTime timer9;
     QTime timer12;
     QTime timer13;
+    QTime timerSinceLastThrow;
 
 
 
     //Start thrower right away
     conf.setSendCmdEnabled(1);
+    resetRemoteCtrl();
     setDcMotor(3,45);
     conf.setSendCmdEnabled(0);
 
@@ -154,6 +157,11 @@ void Neve::go() {
 
 
     while (1) {
+
+        //uncomment to print fielddifs
+//        if(1) {
+//            getThrowAngleCorrectionRelativeToField();
+//        }
 
         if (testToolEnabled) {
             conf.setSendCmdEnabled(1);
@@ -187,14 +195,19 @@ void Neve::go() {
 
 //            TODO: ALWAYS PUT IT BACK
             //Start-speed-stair
-            setOmni(0, 80, 0);
-            msleep(10);
             setOmni(0, 100, 0);
             msleep(10);
-            setOmni(0, 120, 0);
-            msleep(10);
-            setOmni(0, 180, 0);
+            setOmni(0, 200, 0);
             msleep(100);
+            setOmni(0, 254, 5);
+
+            int blindDelay =
+//                    1000 //diagonal to center
+//                    750 //via black line to midpoint
+                    1500 //via black line to other end
+//                    200 // almost no delay
+                    ;
+            msleep(blindDelay);
 
             requestSensors();
             getSensorsResponse();
@@ -206,15 +219,15 @@ void Neve::go() {
         // Robot is waiting start
         if (state == WAITING_START) {
             if (digital[6] == 0 && listeningToRemote == false) {
-                //qDebug() << "I AM HERE";
+                qDebug() << "Manual button pressed down. Setting listening to remote to true;";
                 listeningToRemote = true;
                 continue;
             } else if (listeningToRemote == true && digital[6] == 1) {
-                //qDebug() << "I AM HERE 2";
+//                qDebug() << "Manual button key up. Starting to wait for second click.";
                 waitingSecondClick = true;
                 conf.setSendCmdEnabled(1);
             } else if (digital[6] == 0 && waitingSecondClick == true) {
-                //qDebug() << "I AM HERE 3";
+                qDebug() << "Received second click and setting mustRun to true!";
                 mustRun = true;
                 continue;
             }
@@ -228,7 +241,7 @@ void Neve::go() {
 
         }
 
-        // Robot is started
+        // Robot is running
         if (state != WAITING_START) {
             elapsed = timer_roundTimeElapsed.elapsed() / 1000;
             sprintf(str, "Time %d", elapsed);
@@ -329,7 +342,7 @@ void Neve::go() {
                             }
                         }
 
-                        if (ballDistanceFromRobot < 28.0) {
+                        if (ballDistanceFromRobot < 20.0) {
                             setOmni(0,0,0);
                             msleep(100);
                             setState(DISTRONIC_TURN);
@@ -434,11 +447,17 @@ void Neve::go() {
                                     angle = ballMinAngle * angleAmplifier;
                             }
                         }
+                    } else if (timerSinceLastThrow.elapsed() < 2200) {
+                        decideInstaTurnToGetBall(false);
+                        setOmni(0,5,0);
+                        showCurrentImage();
+                        continue;
                     } else {
                         qDebug() << "No balls seen, insta turn";
                         decideInstaTurnToGetBall(true);
                         setOmni(0,0,0);
                         msleep(100);
+                        showCurrentImage();
                         continue;
                     }
                     setOmni(angle, forwardSpeed, turnSpeed); //Prev else if block has set up angle, forwardSpeed and turnSpeed params
@@ -450,7 +469,7 @@ void Neve::go() {
 
             setThrowerSpeedIfBasketIsSeen();
 
-            if(ballTotal == 0) {
+            if(ballTotal == 0 || ballDistanceFromRobot > 20) {
                 setState(FIND_BALL);
             }
 
@@ -464,9 +483,19 @@ void Neve::go() {
             float circlingDistance = 7.0;
 
             if (goalTarget.area > 0) {
+
+                if (allowedtoGetThrowAngleCorrectionRelativeToField == true) {
+                    angleCorrectionDueToFieldPosition = getThrowAngleCorrectionRelativeToField();
+                    allowedtoGetThrowAngleCorrectionRelativeToField = false;
+                }
+
                 float basketAngle = 0.0;
                 float basketDistance = 0.0;
                 getObjectCalc(&goalTarget, &basketDistance, &basketAngle, getFrameFromCameraNr);
+
+                basketAngle -= 2.9; //default angle shifter
+                basketAngle += 4.1 * angleCorrectionDueToFieldPosition; //field position driven angle shifter
+
 
                 if (abs(basketAngle) <= 40) {
                     velocity = 10.0; //0.28 * abs(basketAngle) + 3.57; //40degrees -> 15.0, 5degrees -> 5
@@ -486,9 +515,8 @@ void Neve::go() {
                 allowedAngleMistake = 3.0;
                }
 
-                if ((abs(basketAngle) <= allowedAngleMistake && abs(ballMinAngle) <= allowedAngleMistake) ||
-                        (abs(basketAngle) <= 6.0 && abs(ballMinAngle) <= 6.0 && timerUnableCenterBallAndBasket.elapsed() > 3500) ) {
-                    qDebug() << "";
+               if ((abs(basketAngle) <= allowedAngleMistake && abs(ballMinAngle) <= allowedAngleMistake) ||
+                        (abs(basketAngle) <= 5.0 && abs(ballMinAngle) <= 5.0 && timerUnableCenterBallAndBasket.elapsed() > 3500) ) {
                     setOmni(0,0,0);
                     msleep(50);
                     setState(IMPROVE_CONTACT_WITH_BALL);
@@ -511,24 +539,31 @@ void Neve::go() {
                 setState(FIND_BALL);
             }
 
+            requestSensors();
+            getSensorsResponse();
             if (getBallSocketState() == BallInSocket) {
                 setState(THROW);
             }
 
             turnSpeed = 0;
-            forwardSpeed = 40;
+            forwardSpeed = 30;
 
             setOmni(0, forwardSpeed, turnSpeed);
         }
 
         if (state == THROW) {
-
+            qDebug() << "THROWING";
             setThrowerSpeedIfBasketIsSeen();
 
+            requestSensors();
+            getSensorsResponse();
             if (getBallSocketState() == BallNotInSocket) {
+                qDebug() << "I HAVE THROWN! STARTING THE TIMER!";
+                //very likely has thrown the ball
+                timerSinceLastThrow.start();
                 setState(FIND_BALL);
             }
-            setOmni(0,30,0);
+            setOmni(0,10,0);
         }
 
         // Escapes black line by driving toward small goal
@@ -630,14 +665,8 @@ void Neve::squareDriveTest() {
     sleep(time);
 }
 
-void Neve::kickBall() {
-    setDcMotor(4, 1);
-
-    requestSensors();
-    msleep(100);
-    getSensorsResponse();
-
-    setDcMotor(4, 0);
+void Neve::resetRemoteCtrl() {
+    setDcMotor(4, 1); //last night hack. 166 binded to reset remoteCommand in microcontroller
 }
 
 void Neve::printGoalInfo() {
@@ -925,12 +954,14 @@ void Neve::findClosestBall(const char* cameraDevice) {
                     sprintf(str, "Ignoring, out of bounds: %.1f", ballDistance);
                     cvPutText(_img, str, cvPoint(obj->center.x, obj->center.y + 15), &(image->font), CV_RGB(0,0,0));
                 }
-            } else if ((ballDistance < 100 && ballDistanceFromEdgeDistPoint < 55) || (ballDistance < 200 && ballDistanceFromEdgeDistPoint < 55)) {
+            }
+            else if ((ballDistance < 100 && ballDistanceFromEdgeDistPoint < 40) /* || (ballDistance < 200 && ballDistanceFromEdgeDistPoint < 55) */) {
                 if (infoMode) {
                     sprintf(str, "Ignoring, fed: %.1f", ballDistanceFromEdgeDistPoint);
                     cvPutText(_img, str, cvPoint(obj->center.x, obj->center.y + 15), &(image->font), CV_RGB(0,0,0));
                 }
-            } else {
+            }
+            else {
                 if (ballTotal==0  // if no balls selected
                         ||  // or
                         (   (   (ballDistanceFromRobot - ballDistance >= preferenceChoiceAmplitude)
@@ -1062,6 +1093,7 @@ void Neve::checkKeyPressAction() {
             break;
         }
         case 'q': {
+            qDebug() << "Pressed q and setting mustRun to true!";
             mustRun = true;
             break;
         }
@@ -1079,6 +1111,36 @@ void Neve::checkKeyPressAction() {
 
     if (infoModeBlinkerCount == 32) infoModeBlinkerCount = 0;
     conf.keyS = NULL;
+}
+
+float Neve::getThrowAngleCorrectionRelativeToField() {
+    _img = image->getFrame(CAMERA_RIGHT);
+    printCameraSource(CAMERA_RIGHT, true);
+    image->process(fieldTop);
+    showCurrentImage();
+    float fieldPointsOnTheRight = image->totalFieldPoints;
+
+    _img = image->getFrame(CAMERA_LEFT);
+    printCameraSource(CAMERA_LEFT, true);
+    image->process(fieldTop);
+    showCurrentImage();
+    float fieldAreaOnTheLeft = image->totalFieldPoints;
+
+//    qDebug() << fieldAreaOnTheLeft << "vs" << fieldPointsOnTheRight;
+    float ratio = abs(1.0-(fieldAreaOnTheLeft/fieldPointsOnTheRight));
+//    qDebug() << ratio;
+
+    // more or less equal
+    if (ratio < 0.2 || ratio > 0.5) {
+        return 0.0;
+    }
+
+    float offsetMultiplier = 1.0;
+    if (fieldAreaOnTheLeft < fieldPointsOnTheRight) {
+        offsetMultiplier *= -1.0;
+    }
+
+    return offsetMultiplier;
 }
 
 void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
@@ -1186,6 +1248,7 @@ void Neve::showCurrentImage() {
 
 void Neve::setState(State newState) {
     if (newState == DISTRONIC_TURN) {
+        allowedtoGetThrowAngleCorrectionRelativeToField = true;
         if (state == IMPROVE_CONTACT_WITH_BALL || state == FIND_BALL) {
             getGoalAimDirection(state.state());
         }
@@ -1202,6 +1265,7 @@ void Neve::findGoals() {
     CvMemStorage* potentialOwnGoalsStorage = cvCreateMemStorage(0);
     CvSeq* potentialTargetGoals = cvCreateSeq(0, sizeof(CvSeq), sizeof(Image::Object), potentialTargetGoalsStorage);
     CvSeq* potentialOwnGoals = cvCreateSeq(0, sizeof(CvSeq), sizeof(Image::Object), potentialOwnGoalsStorage);
+
     for (int i = 0; i < image->found_objects->total; i++) {
         obj = (Image::Object*) cvGetSeqElem((image->found_objects), i);
 
@@ -1281,25 +1345,17 @@ void Neve::readRobotAndFieldSwitches() {
 
 //Remote control
 void Neve::readRemoteCtrl() {
-   if (listeningToRemote == false) return;
+    if (listeningToRemote == false) return;
 
-//    if(mustRun == false) {
-        if (isRCSignalTargetingCommand(RC_SIG_START) == true) {
-            qDebug() << "setting mustRun to true";
-            mustRun = true;
-            //state = FIND_BALL;
-        }
-//    } else {
-        if (isRCSignalTargetingCommand(RC_SIG_STOP) == true) {
-            qDebug() << "stop signal received, falling to wait loop";
-            setOmni(0,0,0);
-            //msleep(75);
-            // TODO state stopped
-            waitActionSignalFromRemoteCtrl(RC_SIG_START); // TODO separate state?
-            //mustRun = false;
-            //state = WAITING_START;
-        }
-//    }
+    if (isRCSignalTargetingCommand(RC_SIG_START) == true) {
+        qDebug() << "setting mustRun to true";
+        mustRun = true;
+    }
+    if (isRCSignalTargetingCommand(RC_SIG_STOP) == true) {
+        qDebug() << "stop signal received, falling to wait loop";
+        setOmni(0,0,0);
+        waitActionSignalFromRemoteCtrl(RC_SIG_START); // TODO separate state?
+    }
 }
 
 void Neve::waitActionSignalFromRemoteCtrl(char actionStart) {
@@ -1323,10 +1379,10 @@ void Neve::waitActionSignalFromRemoteCtrl(char actionStart) {
 bool Neve::isRCSignalTargetingCommand(char action) { // TODO timer to reset last command to 0 after few seconds
     int currentRCSignal = analog[1];
     if (currentRCSignal != 0) {
-        //qDebug() << lastTargetedRCActionCommand << "<- Last | Current:" << currentRCSignal;
+//        qDebug() << lastTargetedRCCommand << "<- Last | Current:" << currentRCSignal;
         if (currentRCSignal != lastTargetedRCCommand) {
             QString currentSignalQStr = QString::number(currentRCSignal);
-            //qDebug() << "New targeted remote control signal:" << currentSignalQStr << selectedRobot;
+//            qDebug() << "New targeted remote control signal:" << currentSignalQStr << selectedRobot;
             if (
                 selectedField == currentSignalQStr[RC_FIELD]
                   && (currentSignalQStr[RC_ROBOT] == RC_SIG_ALL_ROBOTS
@@ -1420,12 +1476,8 @@ void Neve::distancePreserveTurn(int angle) {
 Neve::BallState Neve::getBallSocketState() const {
     if (analog[0] > BEAM_VALUE_BALL_IN_SOCKET) {
         return BallInSocket;
-    }
-    else if (analog[0] < BEAM_NO_BALL) {
+    } else {
         return BallNotInSocket;
-    }
-    else {
-        return BallAlmostInSocket;
     }
 }
 
@@ -1453,6 +1505,13 @@ void Neve::setThrowerSpeedIfBasketIsSeen() {
         float basketAngle = 0.0;
         float basketDistance = 0.0;
         getObjectCalc(&goalTarget, &basketDistance, &basketAngle, getFrameFromCameraNr);
-        setDcMotor(3, 0.1433074527 * basketDistance + 45.6274396764 - 3);
+        float throwerPwm = 0.1433074527 * basketDistance + 45.6274396764 + 1.0;
+        if (basketDistance > 135) {
+            throwerPwm += 2.0;
+        }
+        if (basketDistance > 150) {
+            throwerPwm += 1.0;
+        }
+        setDcMotor(3, throwerPwm);
     }
 }
