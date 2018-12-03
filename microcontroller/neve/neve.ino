@@ -24,7 +24,7 @@
 #define SOLENOID_PIN  12
 
 #define THROWER_PWM_PIN 9
-#define THROWER_HALT_PWM 225
+#define THROWER_HALT_PWM 255
 
 long int scanFreq = 0;  // * 1 Hz
 unsigned long scanFreqTime = 0;
@@ -249,7 +249,7 @@ void parseCommand(char* str){
         throwerCtrl(cmdCode);
         break;
       case 166:
-        solenoidCtrl(cmdCode);
+        remoteCode = 0;
         break;
       case 300:
         newMotionCmd(str);
@@ -612,4 +612,3 @@ void measureScanFreq() {
   
    scanFreq++;
 }
-
