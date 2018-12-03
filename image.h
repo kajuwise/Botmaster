@@ -132,6 +132,7 @@ private:
 public:
     CvFont font; ///< Font which is used to write on the image
     CvSeq* found_objects; ///< Growable sequence of elements. Contains objects found by image processing
+    float totalFieldPoints;
 
     /**
    * @brief Processes the image for objects and other related information.

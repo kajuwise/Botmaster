@@ -706,7 +706,6 @@ void Image::findField(IplImage* img, IplImage* work, IplImage* binary, ObjectTyp
         }
 
         obj.area = fabs(cvContourArea(contours));
-        //qDebug() << "area " << obj.area;
         if (obj.area >= 1000) {
             cvStartReadSeq(contours, &reader, 0);
 
@@ -719,6 +718,9 @@ void Image::findField(IplImage* img, IplImage* work, IplImage* binary, ObjectTyp
         // take the next contour
         contours = contours->h_next;
     }
+
+    totalFieldPoints = fieldPoints->total;
+
 
     if (fieldPoints->total > 0) {
         hull = cvConvexHull2(fieldPoints, 0, CV_CLOCKWISE, 1);
