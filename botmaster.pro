@@ -33,7 +33,10 @@ SOURCES += main.cpp \
     capturethread.cpp \
     imagecalibrationtool.cpp \
     imagecalibrationitem.cpp \
-    robots/neve/stateholder.cpp
+    robots/neve/stateholder.cpp \
+    blackoutconf.cpp \
+    robottesttool.cpp \
+    robottesttoolitem.cpp
 HEADERS += server.h \
     protocolparser.h \
     abstractrobot.h \
@@ -54,7 +57,10 @@ HEADERS += server.h \
     capturethread.h \
     imagecalibrationtool.h \
     imagecalibrationitem.h \
-    robots/neve/stateholder.h
+    robots/neve/stateholder.h \
+    blackoutconf.h \
+    robottesttool.h \
+    robottesttoolitem.h
 
 LIBS += -L/usr/local/lib -lopencv_legacy -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d -lopencv_calib3d -lopencv_objdetect -lopencv_contrib -lopencv_legacy -lopencv_flann
 LIBS += -lm3api
