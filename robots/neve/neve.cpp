@@ -25,10 +25,19 @@
 #define GOAL_CLOSE 270
 #define BLACK_LINE 850
 
+#include "robottesttool.h"
+
+
+/* Omni cheatsheet
+ * dirDeg - direction of movement (0 is forward, 90 is sideways to the right)
+ * velocityBody: drive speed
+ * velocityAngular: spinning speed
+*/
+
 
 //Target ball
 float ballDistanceFromRobot = 0.0;
-float ballDistanceMinAngle = 0.0;
+float ballMinAngle = 0.0;
 float minBallDistanceFromEdgePoint = 0.0;
 
 Image::Object ball;
@@ -39,7 +48,7 @@ int fieldTop[1280];
 char str[50];
 
 int ballTotal = 0;
-int goalSpinDirection = 1;
+int basketSpinDirection = 1;
 int leftCamAngleDiff = -80;
 int rightCamAngleDiff = 82;
 
@@ -68,6 +77,9 @@ const char* getFrameFromCameraNr = CAMERA_FRONT;
 //    const char* getFrameFromCameraNr = CAMERA_LEFT;
 //    const char* getFrameFromCameraNr = CAMERA_RIGHT;
 
+bool testToolEnabled = false;
+int pwmTestValue = 30;
+
 QTime timerLastDistronicTurn;
 QTime inCurrentStateTime;
 
@@ -77,12 +89,24 @@ QTime inCurrentStateTime;
 //
 //
 
+QTime timerUnableCenterBallAndBasket;
+
+
 Neve::Neve()
  : lastTargetedRCCommand(0)
 { } // constructor
 Neve::~Neve() { } // destructor
 
 void Neve::go() {
+
+    if (testToolEnabled) {
+        int testPar1 = 0;
+        int testPar2 = 0;
+        int testPar3 = 0;
+        RobotTestTool * robotTestTool = new RobotTestTool(&testPar1, &testPar2, &testPar3, &pwmTestValue);
+        robotTestTool->show();
+    }
+
     setOmni(0, 0, 0);
     int turnSpeed = 0;
     int forwardSpeed = 0;
@@ -100,20 +124,16 @@ void Neve::go() {
     ball.distanceH = 0;
 
     QTime timer_roundTimeElapsed;
-    QTime timer2;
-    QTime timer_ballContactImprovementTime;
     QTime timer_ballKickTime;
-    QTime timer5;
-    QTime timer8;
     QTime timer9;
     QTime timer12;
     QTime timer13;
-    QTime timer_escapeBlackLine;
-    QTime timer_turnSpeed;
+
+
 
     //Start thrower right away
     conf.setSendCmdEnabled(1);
-    setDcMotor(3,90);
+    setDcMotor(3,45);
     conf.setSendCmdEnabled(0);
 
     qDebug("Neve GO...\n");
@@ -132,7 +152,15 @@ void Neve::go() {
         mustRun = true;
     }
 
+
     while (1) {
+
+        if (testToolEnabled) {
+            conf.setSendCmdEnabled(1);
+            setDcMotor(3, pwmTestValue);
+            conf.setSendCmdEnabled(0);
+        }
+
         requestSensors();
         _img = image->getFrame(getFrameFromCameraNr);
         printCameraSource(getFrameFromCameraNr, false);
@@ -191,7 +219,7 @@ void Neve::go() {
                 continue;
             }
 
-            drawCircleOnGoal();
+            drawCircleOnGoal(); //todo put back
 
 //            if(conf.getImmediateStart()){
 //                qDebug() << "I must start now!";
@@ -233,7 +261,6 @@ void Neve::go() {
 
             if (state != statePrev) {
                 statePrev = state;
-                isNearBall = 0;
                 inCurrentStateTime.start();
                 timer9.start();
                 timer13.start();
@@ -246,104 +273,77 @@ void Neve::go() {
                     state = IMPROVE_CONTACT_WITH_BALL;
                 } else {
                     if (ball.area != 0) {
+                        setThrowerSpeedIfBasketIsSeen();
                         timer9.start();
 
-                        if (ballDistanceFromRobot < 10.0) isNearBall = 1;
-
                         angle = 0;
-
                         forwardSpeed = 200;
-                        turnSpeed = ballDistanceMinAngle * 0.7;
-						
+                        turnSpeed = ballMinAngle * 0.7;
+
                         if (ballDistanceFromRobot < 150.0) {
                             forwardSpeed = 200;
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 205; } //polnud
-                            turnSpeed = ballDistanceMinAngle * 0.7;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 205; } //polnud
+                            turnSpeed = ballMinAngle * 0.7;
                         }
 
                         if (ballDistanceFromRobot < 120.0) {
                             forwardSpeed = 190; //180
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 205; } //200
-                            turnSpeed = ballDistanceMinAngle * 0.7;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 205; } //200
+                            turnSpeed = ballMinAngle * 0.7;
                         }
 
                         if (ballDistanceFromRobot < 100.0) {
                             forwardSpeed = 180; //160
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 200; } //180
-                            turnSpeed = ballDistanceMinAngle * 0.7;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 200; } //180
+                            turnSpeed = ballMinAngle * 0.7;
                         }
 
                         if (ballDistanceFromRobot < 90.0) {
                             forwardSpeed = 160; //140
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 170; } //160
-                            turnSpeed = ballDistanceMinAngle * 0.7;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 170; } //160
+                            turnSpeed = ballMinAngle * 0.7;
                         }
 
                         if (ballDistanceFromRobot < 80.0) {
                             forwardSpeed = 140; //120
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 160; } //140
-                            turnSpeed = ballDistanceMinAngle * 0.7;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 160; } //140
+                            turnSpeed = ballMinAngle * 0.7;
                         }
 
                         if (ballDistanceFromRobot < 60.0) {
                             forwardSpeed = 120; //100
-                            if(abs(ballDistanceMinAngle) > 20 ){forwardSpeed = 140; } //110
-                            turnSpeed = ballDistanceMinAngle * 0.75;
+                            if(abs(ballMinAngle) > 20 ){forwardSpeed = 140; } //110
+                            turnSpeed = ballMinAngle * 0.75;
                         }
 
                         if (ballDistanceFromRobot < 30.0) {
 //                            qDebug() << ballDistanceMinAngle;
                             //If angle is big, take it delicately
 
-                            if (abs(ballDistanceMinAngle) > 20 ){
-                                forwardSpeed = 60; //60
-                                turnSpeed = ballDistanceMinAngle * 0.95;
+                            if (abs(ballMinAngle) > 20 ){
+                                forwardSpeed = 50;
+                                turnSpeed = ballMinAngle * 0.95;
                             } else {
-                                forwardSpeed = 65; //65
-                                turnSpeed = ballDistanceMinAngle * 0.8;
+                                forwardSpeed = 55;
+                                turnSpeed = ballMinAngle * 0.8;
                             }
                         }
 
-                        if (ballDistanceFromRobot < 25.0) {
-//                            qDebug() << ballDistanceMinAngle;
-                            //If angle is big, take it delicately
-
-                            if (minBallDistanceFromEdgePoint < 90 && goalTarget.area == 0) {
-                                setOmni(0,0,0);
-                                msleep(222); // TODO try without me or smaller delay and maybe extract stopping method!
-                                setState(DISTRONIC_TURN);
-                                continue;
-                            }
-
-                            if (abs(ballDistanceMinAngle) > 10 ){
-                                forwardSpeed = 50; //60
-                                turnSpeed = ballDistanceMinAngle;
-                            } else {
-                                forwardSpeed = 60; //65
-                                turnSpeed = ballDistanceMinAngle * 0.8;
-                            }
-                        }
-
-                        if (ballDistanceFromRobot < 10.0) {
-//                            qDebug() << ballDistanceMinAngle;
-                            //If angle is big, take it delicately
-                            if (abs(ballDistanceMinAngle) > 10 ){
-                                forwardSpeed = 40; //60
-                                turnSpeed = ballDistanceMinAngle;
-                            } else {
-                                forwardSpeed = 50; //65
-                                turnSpeed = ballDistanceMinAngle * 0.8;
-                            }
+                        if (ballDistanceFromRobot < 28.0) {
+                            setOmni(0,0,0);
+                            msleep(100);
+                            setState(DISTRONIC_TURN);
+                            continue;
                         }
 
                         bool ballDebug = false;
                         bool ballTests = false;
 
                         if(ballDebug){
-                            qDebug() << "Pall - nurk: " << ballDistanceMinAngle << ", distanceHCm: " << ball.distanceHCm << ", distanceVCm: " << ball.distanceVCm << ", ballDistanceMin:" << ballDistanceFromRobot;
+                            qDebug() << "Pall - nurk: " << ballMinAngle << ", distanceHCm: " << ball.distanceHCm << ", distanceVCm: " << ball.distanceVCm << ", ballDistanceMin:" << ballDistanceFromRobot;
                         }
 
-                        if(ballTests && ballDistanceMinAngle < 45.0 && ballDistanceMinAngle > 20.0 && ball.distanceVCm > 30 && ball.distanceVCm < 50 ){
+                        if(ballTests && ballMinAngle < 45.0 && ballMinAngle > 20.0 && ball.distanceVCm > 30 && ball.distanceVCm < 50 ){
                             turnSpeed = 0;
                             forwardSpeed = 50;
                             angle = 70;
@@ -358,7 +358,7 @@ void Neve::go() {
                         bool autoAimEnabled = true;
                         if(autoAimEnabled
                                 && goalTarget.area != 0
-                                && abs(ballDistanceMinAngle) <= maxSupportedBallAngle
+                                && abs(ballMinAngle) <= maxSupportedBallAngle
                                 && ballDistanceFromRobot <= maxSupportedBallDistance
                                 && minBallDistanceFromEdgePoint > 200 /*magic*/) {
                             //qDebug() << minBallDistanceFromEdgePoint;
@@ -377,36 +377,36 @@ void Neve::go() {
 
                             getObjectCalc(&goalTarget, &goalDistance, &goalAngle, getFrameFromCameraNr);
 
-                            if(goalAngle > 0 && ballDistanceMinAngle > 0){
-                                if(goalAngle > ballDistanceMinAngle){
-                                    newTurnSpeed = abs(goalAngle - ballDistanceMinAngle) * magicConstant;
+                            if(goalAngle > 0 && ballMinAngle > 0){
+                                if(goalAngle > ballMinAngle){
+                                    newTurnSpeed = abs(goalAngle - ballMinAngle) * magicConstant;
                                     //qDebug() << "paremale - v2r-pos > pall-pos";
                                 }else{
                                     magicConstant = magicConstant * (-1);
-                                    newTurnSpeed = abs(ballDistanceMinAngle - goalAngle) * magicConstant;
+                                    newTurnSpeed = abs(ballMinAngle - goalAngle) * magicConstant;
                                     //qDebug() << "vasakule - pall-pos > v2r-pos";
                                 }
 
                             }
-                            if((goalAngle > 0 && ballDistanceMinAngle < 0) || (goalAngle < 0 && ballDistanceMinAngle > 0)){
-                                if(ballDistanceMinAngle > 0){
+                            if((goalAngle > 0 && ballMinAngle < 0) || (goalAngle < 0 && ballMinAngle > 0)){
+                                if(ballMinAngle > 0){
                                     magicConstant = magicConstant * (-1);
                                     forceRight = true;
                                     //qDebug() << "vasakule  - pall-pos : v2r-neg";
                                 }else{
                                     //qDebug() << "paremale - v2r-pos : pall-neg";
                                 }
-                                newTurnSpeed = (abs(goalAngle)+abs(ballDistanceMinAngle)) * magicConstant;
+                                newTurnSpeed = (abs(goalAngle)+abs(ballMinAngle)) * magicConstant;
                                 //qDebug() << "pxxrde suund" << newTurnSpeed << " ja maagiline konstant: " << magicConstant;
                             }
 
-                            if(goalAngle < 0 && ballDistanceMinAngle < 0){
-                                if(goalAngle > ballDistanceMinAngle){
-                                    newTurnSpeed = abs(ballDistanceMinAngle - goalAngle) * magicConstant;
+                            if(goalAngle < 0 && ballMinAngle < 0){
+                                if(goalAngle > ballMinAngle){
+                                    newTurnSpeed = abs(ballMinAngle - goalAngle) * magicConstant;
                                     //qDebug() << "paremale - v2r-neg > pall-neg";
                                 }else{
                                     magicConstant = magicConstant * (-1);
-                                    newTurnSpeed = abs(goalAngle - ballDistanceMinAngle) * magicConstant;
+                                    newTurnSpeed = abs(goalAngle - ballMinAngle) * magicConstant;
                                     //qDebug() << "vasakule - pall-neg > v2r-neg";
                                 }
 
@@ -414,228 +414,121 @@ void Neve::go() {
 
                             turnSpeed = newTurnSpeed;
                             float angleAmplifier;
-                            if(ballDistanceMinAngle <= 7) {  // TODO testing and optimization
+                            if(ballMinAngle <= 7) {  // TODO testing and optimization
                                 angleAmplifier = 2.5;
-                            } else if(ballDistanceMinAngle <= 15) {
+                            } else if(ballMinAngle <= 15) {
                                 angleAmplifier = 4;
-                            } else if (ballDistanceMinAngle <= 25) {
+                            } else if (ballMinAngle <= 25) {
                                 angleAmplifier = 4.5;
-                            } else if (ballDistanceMinAngle <= 30) {
+                            } else if (ballMinAngle <= 30) {
                                 angleAmplifier = 6;
-                            } else if (ballDistanceMinAngle <= 35) {
+                            } else if (ballMinAngle <= 35) {
                                 angleAmplifier = 7;
-                            } else if (ballDistanceMinAngle <= 40) {
+                            } else if (ballMinAngle <= 40) {
                                 angleAmplifier = 8;
                             }
 
                             if(turnSpeed > 0){
-                                    angle = ballDistanceMinAngle * angleAmplifier;// - 60;
+                                    angle = ballMinAngle * angleAmplifier;// - 60;
                             }else{
-                                    angle = ballDistanceMinAngle * angleAmplifier;
+                                    angle = ballMinAngle * angleAmplifier;
                             }
-
                         }
-
-                        //nearGoalSpeedLimiter(&goalOwn, &goalTarget, &forwardSpeed);
                     } else {
-
-                        if (inCurrentStateTime.elapsed() > 15000) {
-                            state = BALL_RANDOM;
-                        } else {
-                            if (timer9.elapsed() > 10000) timer9.start();
-
-                            if (timer9.elapsed() > 7000) {
-                                angle = 0;
-
-                                forwardSpeed = 50;
-                                turnSpeed = 0;
-                                timer13.start();
-                            } else {
-                                forwardSpeed = 0;
-
-                                if (timer13.elapsed() < 3000) {
-                                    turnSpeed = 50 * noBallTurnDir;
-                                } else {
-                                    turnSpeed = 30 * noBallTurnDir;
-                                }
-
-                                angle = 0;
-                            }
-                        }
+                        qDebug() << "No balls seen, insta turn";
+                        decideInstaTurnToGetBall(true);
+                        setOmni(0,0,0);
+                        msleep(100);
+                        continue;
                     }
-
-                    // doDistonicTurnIfNeeded(); // TODO test if ok to remove here
-
                     setOmni(angle, forwardSpeed, turnSpeed); //Prev else if block has set up angle, forwardSpeed and turnSpeed params
                 }
             }
         }
 
         if (state == DISTRONIC_TURN) {
-            if(ballTotal == 0 || ballDistanceFromRobot > 20) {
+
+            setThrowerSpeedIfBasketIsSeen();
+
+            if(ballTotal == 0) {
                 setState(FIND_BALL);
-                continue;
             }
-            setDcMotor(0, 0);
-            setDcMotor(1, 0);
-            setDcMotor(2, 130 * goalSpinDirection);
+
+            int direction = basketSpinDirection;
+
+            // initial full speed values
+            float ballDistanceMultiplier = 2.0;
+            float turnSpeedMultiplier = 2.0;
+            float velocity = 50.0;
+            float angleCorrection = 15.0;
+            float circlingDistance = 7.0;
 
             if (goalTarget.area > 0) {
-                setState(IMPROVE_CONTACT_WITH_BALL);
-                continue;
+                float basketAngle = 0.0;
+                float basketDistance = 0.0;
+                getObjectCalc(&goalTarget, &basketDistance, &basketAngle, getFrameFromCameraNr);
+
+                if (abs(basketAngle) <= 40) {
+                    velocity = 10.0; //0.28 * abs(basketAngle) + 3.57; //40degrees -> 15.0, 5degrees -> 5
+                    angleCorrection = 7.0;
+                    ballDistanceMultiplier = 1.2;
+                    turnSpeedMultiplier = 1.0;
+                }
+
+                if (basketAngle > 0) {
+                    direction = 1;
+                } else {
+                    direction = -1;
+                }
+
+               float allowedAngleMistake = 1.0;
+               if (basketDistance > 200) {
+                allowedAngleMistake = 3.0;
+               }
+
+                if ((abs(basketAngle) <= allowedAngleMistake && abs(ballMinAngle) <= allowedAngleMistake) ||
+                        (abs(basketAngle) <= 6.0 && abs(ballMinAngle) <= 6.0 && timerUnableCenterBallAndBasket.elapsed() > 3500) ) {
+                    qDebug() << "";
+                    setOmni(0,0,0);
+                    msleep(50);
+                    setState(IMPROVE_CONTACT_WITH_BALL);
+                    continue;
+                }
             }
+
+            angle = (-direction * 90) + (direction * (ballDistanceFromRobot - circlingDistance) * ballDistanceMultiplier);
+            turnSpeed = (ballMinAngle + direction*angleCorrection) * turnSpeedMultiplier;
+            setOmni(angle, velocity, turnSpeed);
         }
 
         // Make solid contact with the ball.
         // Robot drives forward some time.
         if (state == IMPROVE_CONTACT_WITH_BALL) {
-            if (state != statePrev) {
-                statePrev = state;
-                timer_ballContactImprovementTime.start();
+
+            setThrowerSpeedIfBasketIsSeen();
+
+            if(ballDistanceFromRobot > 20 || abs(ballMinAngle) > 15) {
+                setState(FIND_BALL);
             }
-
-            turnSpeed = 0;
-            forwardSpeed = 58;  // TODO test higher values like 60
-
-            setOmni(0, forwardSpeed, turnSpeed);
 
             if (getBallSocketState() == BallInSocket) {
-                msleep(100);    // drive forward to make solid contact with ball
-                setState(FIND_GOAL);
+                setState(THROW);
             }
 
-            if (timer_ballContactImprovementTime.elapsed() > 500) state = FIND_BALL;
+            turnSpeed = 0;
+            forwardSpeed = 40;
 
+            setOmni(0, forwardSpeed, turnSpeed);
         }
 
-        // Robot posesses ball and is searching the goal.
-        // After finding the goal kicks ball in.
-        if (state == FIND_GOAL) {
-            if (state != statePrev) {
-                statePrev = state;
-                timer2.start();
-                timer_turnSpeed.start(); //turnspeed
-            }
+        if (state == THROW) {
+
+            setThrowerSpeedIfBasketIsSeen();
 
             if (getBallSocketState() == BallNotInSocket) {
-                state = IMPROVE_CONTACT_WITH_BALL;
-            } else {
-                if (timer2.elapsed() > 6000) {
-                    state = GOAL_RANDOM;
-                } else {
-                    // No goal on view
-                    if (goalTarget.area == 0) {
-                        // Uses IR beacon to find goal
-                        turnSpeed = 60 * goalSpinDirection;
-
-                        angle = 0;
-                        forwardSpeed = 0;
-			
-                        setOmni(turnSpeed < 0? 83 : -83, abs(turnSpeed), turnSpeed );
-                        //setOmni(angle, forwardSpeed, turnSpeed);
-                    } else {
-                        error = goalTarget.distanceH;
-
-                        if (centerOnGoal(goalTarget, turnSpeed)) {
-                            if (clearToKick) {
-                                kickBall();
-                                kickCount++;
-
-                                qDebug() << "Ball kick time: " << timer_ballKickTime.elapsed() / 1000 << "\n";
-                                timer_ballKickTime.start();
-                                setOmni(0,0,0); //Is this needed?
-
-                                decideInstaTurnToGetBall(true);
-
-                                state = FIND_BALL;
-
-                            } else {
-                                state = NEW_KICK_POSITION;
-                            }
-                        } else {
-                            forwardSpeed = 20;
-                            angle = 0;
-
-                            if (error == 0) {
-                                turnSpeed = 0;
-                            } else {
-                                turnSpeed = log2f(abs(error));
-                                turnSpeed *= 2;
-                            }
-
-                            if (error < 0) turnSpeed = -turnSpeed;
-                            setOmni(angle, forwardSpeed, turnSpeed);
-                        }
-                    }
-                }
+                setState(FIND_BALL);
             }
-        }
-
-        // Finds new kick position
-        if (state == NEW_KICK_POSITION) {
-            if (state != statePrev) {
-                statePrev = state;
-                timer8.start();
-            }
-
-            error = goalTarget.distanceH;
-            turnSpeed = abs(error) * 0.2;
-            if (error < 0) turnSpeed = -turnSpeed;
-
-            angle = 75;
-            forwardSpeed = 46;
-            setOmni(angle, forwardSpeed, turnSpeed);
-
-            if (timer8.elapsed() > 250) state = FIND_GOAL;
-            if (getBallSocketState() == BallNotInSocket) state = IMPROVE_CONTACT_WITH_BALL;
-        }
-
-        // Random goal searching
-        if (state == GOAL_RANDOM) {
-            if (state != statePrev) {
-                statePrev = state;
-                drivingForward = 0;
-            }
-
-            if (drivingForward == 0) {
-                timer5.start();
-                drivingForward = 1;
-                random = (rand() % 2000) + 500;
-            }
-
-            forwardSpeed = 50;
-            turnSpeed = 0;
-
-            if (timer5.elapsed() > random) {
-                forwardSpeed = 0;
-                state = FIND_GOAL;
-            }
-
-            setOmni(0, forwardSpeed, turnSpeed);
-        }
-
-        // Random ball searching
-        if (state == BALL_RANDOM) {
-            if (state != statePrev) {
-                statePrev = state;
-                drivingForward = 0;
-            }
-
-            if (drivingForward == 0) {
-                timer5.start();
-                drivingForward = 1;
-                random = (rand() % 4000) + 2000;
-            }
-
-            forwardSpeed = 50;
-            turnSpeed = 0;
-
-            if (timer5.elapsed() > random) {
-                forwardSpeed = 0;
-                state = FIND_BALL;
-            }
-
-            setOmni(0, forwardSpeed, turnSpeed);
+            setOmni(0,30,0);
         }
 
         // Escapes black line by driving toward small goal
@@ -751,7 +644,7 @@ void Neve::printGoalInfo() {
     if (!infoMode) return;
 
     cvPutText(_img, "Target basket:", cvPoint(_img->width/2-425, _img->height-60), &(image->font), CV_RGB(255,255,255));
-    cvPutText(_img, "Own basket:", cvPoint(_img->width/2-40, _img->height-30), &(image->font), CV_RGB(255,255,255));
+    cvPutText(_img, "Own basket:", cvPoint(_img->width/2-400, _img->height-30), &(image->font), CV_RGB(255,255,255));
 
     //in case of logical error - visible immediately
     if (goalTargetColor == BASKET_PURPLE) {
@@ -810,9 +703,6 @@ int Neve::centerOnGoal(Image::Object goal, int turnSpeed) {
 
 void Neve::getGoalAimDirection(State state) {
 
-    //Do not do anything here if we are already searching for goal
-    if(state==FIND_GOAL){return;}
-
     //Kilplase code below
     Image::Object frontVisibleTargetGoal = goalTarget;
     Image::Object frontVisibleOwnGoal = goalOwn;
@@ -822,11 +712,11 @@ void Neve::getGoalAimDirection(State state) {
     image->process(fieldTop);
     findGoals();
     if (goalTarget.area != 0) {
-        goalSpinDirection = 1;
+        basketSpinDirection = 1;
         return;
     }
     if (goalOwn.area != 0) {
-        goalSpinDirection = -1;
+        basketSpinDirection = -1;
         return;
     }
 
@@ -835,35 +725,35 @@ void Neve::getGoalAimDirection(State state) {
     image->process(fieldTop);
     findGoals();
     if (goalTarget.area != 0) {
-        goalSpinDirection = -1;
+        basketSpinDirection = -1;
         return;
     }
     if (goalOwn.area != 0) {
-        goalSpinDirection = 1;
+        basketSpinDirection = 1;
         return;
     }
 
 
     if (frontVisibleTargetGoal.area != 0) {
         if (frontVisibleTargetGoal.distanceH > 0) {
-            goalSpinDirection = 1;
+            basketSpinDirection = 1;
         } else {
-            goalSpinDirection = -1;
+            basketSpinDirection = -1;
         }
         return;
     }
 
     if (frontVisibleOwnGoal.area != 0) {
         if (frontVisibleOwnGoal.distanceH > 0) {
-            goalSpinDirection = -1;
+            basketSpinDirection = -1;
         } else {
-            goalSpinDirection = 1;
+            basketSpinDirection = 1;
         }
         return;
     }
 
     cvPutText(_img, "AIM GOAL LEFT! - saw nothing", cvPoint(_img->width/2, _img->height-30), &(image->font), CV_RGB(255,255,0));
-    goalSpinDirection = -1;
+    basketSpinDirection = -1;
 }
 
 void Neve::getObjectCalc(Image::Object* object, float* distance, float* angle, const char* cameraDevice) {
@@ -1048,14 +938,14 @@ void Neve::findClosestBall(const char* cameraDevice) {
                                 (abs(ballDistance-ballDistanceFromRobot) < preferenceChoiceAmplitude)
                             )
                             &&  // and
-                            abs(ballAngle) < abs(ballDistanceMinAngle)  // if current ball angle smaller than minimal ball angle
+                            abs(ballAngle) < abs(ballMinAngle)  // if current ball angle smaller than minimal ball angle
                         )
                    )
 
                 {
                     printBallStats(obj, &ballAngle, &ballDistance, false);
                     ballDistanceFromRobot = ballDistance;
-                    ballDistanceMinAngle = ballAngle;
+                    ballMinAngle = ballAngle;
                     minBallDistanceFromEdgePoint = ballDistanceFromEdgeDistPoint;  // kaugus v2ljaku servast (mustast joonest)
                     ball = *obj;
                 }
@@ -1066,7 +956,7 @@ void Neve::findClosestBall(const char* cameraDevice) {
     }
 
     if (ballTotal > 0) {
-        printBallStats(&ball, &ballDistanceMinAngle, &ballDistanceFromRobot, true);
+        printBallStats(&ball, &ballMinAngle, &ballDistanceFromRobot, true);
     }
 }
 
@@ -1203,7 +1093,7 @@ void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
     }
 
     int ballsAtFront = ballTotal;
-    int frontBallAngle = ballDistanceMinAngle;
+    int frontBallAngle = ballMinAngle;
     if(ballDistanceFromRobot < 10) return; //take front ball when distance is very small
 
     _img = image->getFrame(CAMERA_RIGHT);
@@ -1211,7 +1101,7 @@ void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
     image->process(fieldTop);
     findClosestBall(CAMERA_RIGHT);
     int ballsOnTheRight = ballTotal;
-    int rightBallAngle = ballDistanceMinAngle;
+    int rightBallAngle = ballMinAngle;
     int rightBallDistance = ballDistanceFromRobot;
     //showCurrentImage();
     //msleep(750);
@@ -1221,7 +1111,7 @@ void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
     image->process(fieldTop);
     findClosestBall(CAMERA_LEFT);
     int ballsOnTheLeft = ballTotal;
-    int leftBallAngle = ballDistanceMinAngle;
+    int leftBallAngle = ballMinAngle;
     int leftBallDistance = ballDistanceFromRobot;
     //showCurrentImage();
     //msleep(750);
@@ -1229,8 +1119,6 @@ void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
 
 
     if (ballsOnTheLeft > 0 || ballsOnTheRight >0) {
-
-        //if (ballsAtFront < ballsOnTheLeft || ballsAtFront < ballsOnTheRight) {
             if (ballsOnTheLeft >= ballsOnTheRight) {
 
                 if ((-60 < leftBallAngle && leftBallAngle < -80) && (25 < leftBallDistance && leftBallDistance < 40) && goalTarget.area > 0) {
@@ -1245,7 +1133,6 @@ void Neve::decideInstaTurnToGetBall(bool oneEightyIfNowhereFound) {
                     instaTurn(rightBallAngle);
                 }
             }
-        //}
     } else {
         if (ballsAtFront > 0) {
             instaTurn(frontBallAngle);
@@ -1298,10 +1185,11 @@ void Neve::showCurrentImage() {
 }
 
 void Neve::setState(State newState) {
-    if (newState == FIND_GOAL || newState == DISTRONIC_TURN) {
+    if (newState == DISTRONIC_TURN) {
         if (state == IMPROVE_CONTACT_WITH_BALL || state == FIND_BALL) {
             getGoalAimDirection(state.state());
         }
+        timerUnableCenterBallAndBasket.start();
     }
     state = newState;
 }
@@ -1361,11 +1249,11 @@ void Neve::findGoals() {
         }
     }
 
-// Uncomment to print goal stats
-//    float goalDistance = 0.0;
-//    float goalAngle = 0.0;
-//    getObjectCalc(&goalTarget, &goalDistance, &goalAngle, CAMERA_FRONT);
-//    printBasketStats(&goalTarget, &goalAngle, &goalDistance);
+// Uncomment to print basket stats
+    float basketDistance = 0.0;
+    float basketAngle = 0.0;
+    getObjectCalc(&goalTarget, &basketDistance, &basketAngle, CAMERA_FRONT);
+    printBasketStats(&goalTarget, &basketAngle, &basketDistance);
 
     //Find biggest own goal
     for (int i = 0; i < potentialOwnGoals->total; i++) {
@@ -1393,7 +1281,6 @@ void Neve::readRobotAndFieldSwitches() {
 
 //Remote control
 void Neve::readRemoteCtrl() {
-
    if (listeningToRemote == false) return;
 
 //    if(mustRun == false) {
@@ -1559,4 +1446,13 @@ bool Neve::isCloseToGoal() const
 
     return analog[2] > GOAL_CLOSE && (ownGoalLooksClose || targetGoalLooksClose);
 
+}
+
+void Neve::setThrowerSpeedIfBasketIsSeen() {
+    if (goalTarget.area > 0) {
+        float basketAngle = 0.0;
+        float basketDistance = 0.0;
+        getObjectCalc(&goalTarget, &basketDistance, &basketAngle, getFrameFromCameraNr);
+        setDcMotor(3, 0.1433074527 * basketDistance + 45.6274396764 - 3);
+    }
 }

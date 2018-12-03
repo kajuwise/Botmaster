@@ -54,10 +54,10 @@ int main(int argc, char *argv[])
 
     //Slider stuff
 //    QApplication app(argc, argv);
-      qInstallMessageHandler(myMessageHandler); // text file logging
+//      qInstallMessageHandler(myMessageHandler); // text file logging
 
     ImageCalibrationTool *window = new ImageCalibrationTool();
-    window->setWindowTitle(QString::fromUtf8("Botmaster 2k13 Image Calibration tool"));
+    window->setWindowTitle(QString::fromUtf8("Botmaster 2k18 Image Calibration tool"));
     window->show();
 
     //Slider stuff end

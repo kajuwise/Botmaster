@@ -6,15 +6,17 @@
  *
  * Copyright: See COPYING file that comes with this distribution
  *
- * @author Valdur Kaldvee (C) 2008
- * @author Margus Ernits <margus.ernits@itcollege.ee>, (C) 2008
- * @author Mauno Pihelgas <mpihelga@itcollege.ee>, (C) 2010
+ * @author Valdur Kaldvee
+ * @author Margus Ernits
+ * @author Mauno Pihelgas
+ * @author Erik Kaju
  */
 #ifndef CONFIG_H
 #define CONFIG_H
 #include <getopt.h> //longopts
 #include "simpleini/SimpleIni.h"
 #include "objecttype.h"
+#include "blackoutconf.h"
 #include <cv.h>
 #include <highgui.h>
 #include <QSettings>
@@ -74,6 +76,7 @@ private:
      int img_exposure;
      int img_gain;
      ObjectType blue, yellow, orange, black, green;
+     BlackoutConf blackout;
 
 
 public:
@@ -129,7 +132,7 @@ public:
     {
         return  & yellow;
     }
-    ObjectType* getOrange()
+    ObjectType * getOrange()
     {
         return & orange;
     }
@@ -178,6 +181,10 @@ public:
         return saveImage;
     }
 
+
+    BlackoutConf * getBlackout() {
+        return & blackout;
+    }
 
 protected:
     int showImage;

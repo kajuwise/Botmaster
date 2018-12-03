@@ -7,32 +7,26 @@
 #include<QLabel>
 #include<QToolButton>
 #include<QSlider>
+#include <QDebug>
 
-class ImageCalibrationItem : QObject
+class RobotTestToolItem : QObject
 {
   Q_OBJECT
 
   public:
-    ImageCalibrationItem(const std::string&, int *, const std::string&, QLayout *, int, int);
+    RobotTestToolItem(const std::string&, int *, QLayout *, int, int);
 
-    ~ ImageCalibrationItem(){};
+    ~ RobotTestToolItem(){};
 
   public slots:
     void valueChangedSlot(int value);
-    void saveParameter();
-    void resetParameter();
   public:
-    QLabel* label;
-    QLabel* label2;
-    QToolButton* button;
-    QToolButton* button2;
+    QLabel* labelName;
+    QLabel* labelSliderValue;
     QSlider* slider;
-    QSlider* slider2;
 
     QLayout* rowHostLayout;
     int * param;
-    void setParam(int*);
     void setRowHostLayout(QLayout *);
-    QString confParamName;
 };
 #endif

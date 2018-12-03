@@ -4,7 +4,7 @@
 // Description: 
 //
 //
-// Author: Valdur Kaldvee (C) 2010
+// Author: Valdur Kaldvee, Erik Kaju
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -12,6 +12,9 @@
 #ifndef NEVE_TEST_H
 #define NEVE_TEST_H
 #include "robottestsuite.h"
+
+#include<QtGui>
+#include <QMainWindow>
 
 class NeveTest: public RobotTestSuite
 {
@@ -34,6 +37,11 @@ public:
     void waitActionSignalFromRemoteCtrl(char action);
     bool isSignalTargeting(char action);
     void distancePreserveTurn(int angle);
+
+    int omniTestDirDeg = 0;
+    int omniTestVelocityBody = 0;
+    int omniTestVelocityAngular = 0;
+    int throwerTestPwm = 0;
 
 	  
 };

@@ -281,9 +281,18 @@ IplImage* Image::getFrame(const char* cameraDevice)
 //      Vana single-threaded RGB-HSL konversioon, ~9.05ms @ 996x996px
 //  fastCvtColor(img, work, LUT);
 
+
+    QFuture<void> future1;
+    QFuture<void> future2;
 //      Uus variant, ~7.65ms @ 996x996px
-    QFuture<void> future1 = QtConcurrent::run(this, &Image::fastCvtColorFraction, img, work, LUT, 1,2);
-    QFuture<void> future2 = QtConcurrent::run(this, &Image::fastCvtColorFraction, img, work, LUT, 2,2);
+    //super ugly, but no time right now
+    if (cameraDevice == CAMERA_FRONT) {
+        future1 = QtConcurrent::run(this, &Image::fastCvtColorFractionWithBlackout, img, work, LUT, 1,2);
+        future2 = QtConcurrent::run(this, &Image::fastCvtColorFractionWithBlackout, img, work, LUT, 2,2);
+    } else {
+        future1 = QtConcurrent::run(this, &Image::fastCvtColorFractionWithBlackout, img, work, LUT, 1,2);
+        future2 = QtConcurrent::run(this, &Image::fastCvtColorFractionWithBlackout, img, work, LUT, 2,2);
+    }
 
     future1.waitForFinished();
     future2.waitForFinished();
@@ -993,8 +1002,16 @@ void Image::fastCvtColor(IplImage* imgSrc, IplImage* imgDest, CvMat* LUT) {
     }
 }
 
-/**todo comment */
+void Image::fastCvtColorFractionWithBlackout(IplImage* imgSrc, IplImage* imgDest, CvMat* LUT, int part, int sumOfParts) {
+    return fastCvtColorFraction(imgSrc, imgDest, LUT, part, sumOfParts, true);
+}
+
 void Image::fastCvtColorFraction(IplImage* imgSrc, IplImage* imgDest, CvMat* LUT, int part, int sumOfParts) {
+    return fastCvtColorFraction(imgSrc, imgDest, LUT, part, sumOfParts, false);
+}
+
+
+void Image::fastCvtColorFraction(IplImage* imgSrc, IplImage* imgDest, CvMat* LUT, int part, int sumOfParts, bool applyBlackout) {
     int step1, channels, BGR, i, j;
     int heightStartIndex, heightEndIndex;
     int widthStartIndex, widthEndIndex;
@@ -1050,7 +1067,18 @@ void Image::fastCvtColorFraction(IplImage* imgSrc, IplImage* imgDest, CvMat* LUT
 
         BGR = *ptrSrc & 0xFFFFFF;
 
-        memcpy(ptrDest, &dataLUT[BGR*step2], 3);
+        if (applyBlackout &&
+            //Hide thrower
+            (j > conf->getBlackout()->getThrowerXFrom() && j < conf->getBlackout()->getThrowerXTo() && i > conf->getBlackout()->getThrowerY()) ||
+                (j < conf->getBlackout()->getCornerLeftX() && i > conf->getBlackout()->getCornerLeftY()) ||
+                (j > conf->getBlackout()->getCornerRightX() && i > conf->getBlackout()->getCornerRightY())
+
+                ) {
+            *ptrSrc = 0;
+            ptrDest = 0;
+        } else {
+            memcpy(ptrDest, &dataLUT[BGR*step2], 3);
+        }
     }
 }
 

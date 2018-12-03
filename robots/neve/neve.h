@@ -33,14 +33,11 @@ public:
         WAITING_START,                            //          "WAITING_START"; //1
         FIND_BALL,                                //      "FIND_BALL"; //2
         IMPROVE_CONTACT_WITH_BALL,                //                      "IMPROVE_CONTACT_WITH_BALL"; //3
-        FIND_GOAL,                                //      "FIND_GOAL"; //4
-        GOAL_RANDOM,                              //        "GOAL_RANDOM";
-        BALL_RANDOM,                              //        "BALL_RANDOM";
-        NEW_KICK_POSITION,                        //              "NEW_KICK_POSITION";
         ESCAPE_BLACK_LINE,                        //              "ESCAPE_BLACK_LINE";
         START_ESCAPE_BLACK_LINE,                  //                    "START_ESCAPE_BLACK_LINE";
         DISTRONIC_TURN,                           //           "DISTRONIC_TURN";
         ESCAPE_GOAL_TOO_CLOSE,
+        THROW,
     };
 
 
@@ -92,6 +89,7 @@ private:
     bool doDistronicTurnBasedOnGoalPosition(const char* cameraDevice);
     BallState getBallSocketState() const;
     bool isCloseToGoal() const;
+    void setThrowerSpeedIfBasketIsSeen();
 
 
 private:
