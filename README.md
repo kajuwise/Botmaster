@@ -1,5 +1,5 @@
 # Botmaster
-![Neve practicing](https://user-images.githubusercontent.com/10528501/49433530-f7501b00-f7ba-11e8-9a48-03ea2723f696.gif)
+![Neve practicing](https://user-images.githubusercontent.com/10528501/49433530-f7501b00-f7ba-11e8-9a48-03ea2723f696.gif)\
 Robot software written in C/C++.
 
 Botmaster robot control platform is a flexible software framework that has been designed by EIC Robotics Club. 
