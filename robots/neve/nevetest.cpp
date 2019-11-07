@@ -21,6 +21,11 @@
 #include <QMenu>
 #include <QAction>
 
+#define DIGITAL_SIG_ROBOT_SELECTOR 0
+#define DIGITAL_SIG_FIELD_SELECTOR 1
+#define DIGITAL_SIG_START_BUTTON 2
+#define DIGITAL_SIG_EZ_RC 3
+
 using namespace std;
 RobotTestTool *robotTestToolWindow;
 
@@ -262,15 +267,15 @@ void NeveTest::sideStep(int angle, int distance) {
 QChar selectedRobot;
 QChar selectedField;
 void NeveTest::readRobotAndFieldSwitches() {
-    if (digital[4] == 0) {
+    if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 0) {
         selectedRobot = QChar(RC_SIG_A);
-    } else if (digital[4] == 1) {
+    } else if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 1) {
         selectedRobot = QChar(RC_SIG_B);
     }
 
-    if (digital[5] == 0) {
+    if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 0) {
         selectedField = RC_SIG_A;
-    } else if (digital[5] == 1) {
+    } else if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 1) {
         selectedField = RC_SIG_B;
     }
 }

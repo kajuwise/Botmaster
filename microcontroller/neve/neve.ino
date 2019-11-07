@@ -21,10 +21,10 @@
 #define M2_DIR_PIN     23
 #define M2_MONITOR_PIN 24
 
-#define SOLENOID_PIN  12
-
 #define THROWER_PWM_PIN 9
 #define THROWER_HALT_PWM 255
+
+#define EZ_RC_PIN 46
 
 long int scanFreq = 0;  // * 1 Hz
 unsigned long scanFreqTime = 0;
@@ -44,7 +44,6 @@ char robot;
 bool start;
 
 int analog[8] = {0};
-int digital[8] = {0};
 
 int m0_rpm;
 volatile unsigned long m0_time = 0;
@@ -81,7 +80,6 @@ char setField = 'A';
 void setup()
 {
   motorInit();
-  solenoidInit();
   //beaconInit();
   //measureScanFreqInit();
   
@@ -94,43 +92,10 @@ void setup()
   pinMode(20, OUTPUT);
   pinMode(21, OUTPUT);
   
+  pinMode(EZ_RC_PIN, INPUT);
+  
   Serial.begin(115200);
   Serial2.begin(9600);
-}
-
-void motorInit() {
-  pinMode(M0_PWM_PIN, OUTPUT);
-  pinMode(M0_EN_PIN , OUTPUT);
-  pinMode(M0_DIR_PIN, OUTPUT);
-  
-  pinMode(M1_PWM_PIN, OUTPUT);
-  pinMode(M1_EN_PIN , OUTPUT);
-  pinMode(M1_DIR_PIN, OUTPUT);
-  
-  pinMode(M2_PWM_PIN, OUTPUT);
-  pinMode(M2_EN_PIN , OUTPUT);
-  pinMode(M2_DIR_PIN, OUTPUT);
-  
-  pinMode(THROWER_PWM_PIN, OUTPUT);
-  
-  //attachInterrupt(5, M0_ISR, CHANGE);
-  //attachInterrupt(4, M1_ISR, CHANGE);
-  //attachInterrupt(3, M2_ISR, CHANGE);
-  
-  throwerHalt();
-  omni(0, 0, 0);
-  omni(1, 0, 0);
-  omni(2, 0, 0);
-}
-
-void solenoidInit() {
-  pinMode(SOLENOID_PIN, OUTPUT); 
-}
-
-void beaconInit() {
-  // beacon interrupts
-  attachInterrupt(0, b1_ISR, CHANGE);
-  attachInterrupt(1, b2_ISR, CHANGE);
 }
 
 void loop()
@@ -168,12 +133,43 @@ void loop()
   //Serial.println(analog[1]);
   //delay(500);
   
-  beaconCheck(&b1);
-  beaconCheck(&b2);
+  //beaconCheck(&b1);
+  //beaconCheck(&b2);
 
   readRemote(&field, &robot, &start);
 
   //while (1) squareDriveTest();
+}
+
+void motorInit() {
+  pinMode(M0_PWM_PIN, OUTPUT);
+  pinMode(M0_EN_PIN , OUTPUT);
+  pinMode(M0_DIR_PIN, OUTPUT);
+  
+  pinMode(M1_PWM_PIN, OUTPUT);
+  pinMode(M1_EN_PIN , OUTPUT);
+  pinMode(M1_DIR_PIN, OUTPUT);
+  
+  pinMode(M2_PWM_PIN, OUTPUT);
+  pinMode(M2_EN_PIN , OUTPUT);
+  pinMode(M2_DIR_PIN, OUTPUT);
+  
+  pinMode(THROWER_PWM_PIN, OUTPUT);
+  
+  //attachInterrupt(5, M0_ISR, CHANGE);
+  //attachInterrupt(4, M1_ISR, CHANGE);
+  //attachInterrupt(3, M2_ISR, CHANGE);
+  
+  throwerHalt();
+  omni(0, 0, 0);
+  omni(1, 0, 0);
+  omni(2, 0, 0);
+}
+
+void beaconInit() {
+  // beacon interrupts
+  attachInterrupt(0, b1_ISR, CHANGE);
+  attachInterrupt(1, b2_ISR, CHANGE);
 }
 
 void squareDriveTest() {
@@ -337,21 +333,21 @@ void getMesasurments() {
   Serial.print(",");
   Serial.print(b2.nr);
   Serial.print(",");
-  Serial.print(digital[30]);
-  Serial.print(",");
-  Serial.print(digital[31]);
-  Serial.print(",");
-  Serial.print(digital[32]);
-  Serial.print(",");
-  Serial.print(digital[33]);
-  Serial.print(",");
   Serial.print(robotButton);
   Serial.print(",");
   Serial.print(fieldButton);
   Serial.print(",");
   Serial.print(startButton);
   Serial.print(",");
-  Serial.print(digital[37]);
+  Serial.print(digitalRead(EZ_RC_PIN));
+  Serial.print(",");
+  Serial.print(-1);
+  Serial.print(",");
+  Serial.print(-1);
+  Serial.print(",");
+  Serial.print(-1);
+  Serial.print(",");
+  Serial.print(-1);
   Serial.println("");
 }
 
@@ -575,11 +571,6 @@ void throwerCtrl(int throwerControlValue) {
 
 void sendThrowerPwm(int pwm) {
   analogWrite(THROWER_PWM_PIN, pwm);
-}
-
-void solenoidCtrl(int value) {
-  if (value == 0) digitalWrite(SOLENOID_PIN, LOW); 
-  if (value == 1) digitalWrite(SOLENOID_PIN, HIGH);
 }
 
 void calcMotorRpm() {

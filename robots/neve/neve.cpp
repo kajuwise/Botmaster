@@ -24,6 +24,11 @@
 #define GOAL_CLOSE 270
 #define BLACK_LINE 850
 
+#define DIGITAL_SIG_ROBOT_SELECTOR 0
+#define DIGITAL_SIG_FIELD_SELECTOR 1
+#define DIGITAL_SIG_START_BUTTON 2
+#define DIGITAL_SIG_EZ_RC 3
+
 #include "robottesttool.h"
 
 
@@ -218,15 +223,15 @@ void Neve::go() {
 
         // Robot is waiting start
         if (state == WAITING_START) {
-            if (digital[6] == 0 && listeningToRemote == false) {
+            if (digital[DIGITAL_SIG_START_BUTTON] == 0 && listeningToRemote == false) {
                 qDebug() << "Manual button pressed down. Setting listening to remote to true;";
                 listeningToRemote = true;
                 continue;
-            } else if (listeningToRemote == true && digital[6] == 1) {
+            } else if (listeningToRemote == true && digital[DIGITAL_SIG_START_BUTTON] == 1) {
 //                qDebug() << "Manual button key up. Starting to wait for second click.";
                 waitingSecondClick = true;
                 conf.setSendCmdEnabled(1);
-            } else if (digital[6] == 0 && waitingSecondClick == true) {
+            } else if (digital[DIGITAL_SIG_START_BUTTON] == 0 && waitingSecondClick == true) {
                 qDebug() << "Received second click and setting mustRun to true!";
                 mustRun = true;
                 continue;
@@ -1330,15 +1335,15 @@ void Neve::findGoals() {
 }
 
 void Neve::readRobotAndFieldSwitches() {
-    if (digital[4] == 0) {
+    if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 0) {
         selectedRobot = QChar(RC_SIG_A);
-    } else if (digital[4] == 1) {
+    } else if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 1) {
         selectedRobot = QChar(RC_SIG_B);
     }
 
-    if (digital[5] == 0) {
+    if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 0) {
         selectedField = RC_SIG_A;
-    } else if (digital[5] == 1) {
+    } else if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 1) {
         selectedField = RC_SIG_B;
     }
 }
