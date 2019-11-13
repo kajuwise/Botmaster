@@ -1,10 +1,4 @@
-//#include "include/crc32c.h"
-
-byte FrameType = 0x00;
-uint8_t CRC = 0x00;
-
-uint8_t buf[40];
-
+#define ARRAY_SIZE( array ) ( sizeof( array )/sizeof( array[0] ) )
 
 uint32_t crctable[256]={
   0x00000000L,0xF26B8303L,0xE13B70F7L,0x1350F3F4L,
@@ -76,96 +70,90 @@ uint32_t crctable[256]={
 void setup() {
   Serial.begin(115200);
   Serial3.begin(115200,SERIAL_8N1); // For the serial port
-  CRC = crc32b(&FrameType);
   Serial.println("Set up done");
 }
 
-uint8_t generalStatusMessage[7] = {0x8E, 0x00, 0x51, 0x53, 0x7D, 0x52, 0x8E}; 
-
-boolean sentOnce1 = true;
-boolean sentOnce2 = true;
-boolean sentOnce3 = false;
+boolean sendGeneralStatusMessage = false;
+boolean sendRunTask = true;
 
 void loop() {
   
-  if (sentOnce1 != true) {
-    Serial.println("TEST1"); 
-    sentOnce1 = true;
-    Serial3.write(0x8E); // delimiter
-    Serial3.write(FrameType); // FrameType
-//    Serial3.write(CRC); // calculated CRC
-    Serial3.write(0x51);
-    Serial3.write(0x53);
-    Serial3.write(0x7D);
-    Serial3.write(0x52);
-    Serial3.write(0x8E); // delimiter
+  if (sendGeneralStatusMessage == true) {
+    Serial.println("GENERAL_STATUS_MESSAGE"); 
+
+    sendToMyxa(0x8E, false); // delimiter
+    
+    uint8_t frameType = 0x00;
+    uint8_t payloadAndFrameType[1] = {frameType};
+
+    sendToMyxa(payloadAndFrameType, ARRAY_SIZE(payloadAndFrameType), true);
+    
+    //crc32c
+    byte crc32cBytes[4];  
+    crc32c_bytes_little_endian(payloadAndFrameType, 1, crc32cBytes);
+    sendToMyxa(crc32cBytes, ARRAY_SIZE(crc32cBytes), true);
+    
+    sendToMyxa(0x8E, false); // delimiter
+    
     Serial.println("Sent message");
+    sendGeneralStatusMessage = false;
   }
   
-    if (sentOnce3 != true) {
-      Serial.println("TEST3.2");
-      
-      sentOnce3 = true;
-/*
-      Serial3.write(generalStatusMessage[0]);
-      Serial3.write(generalStatusMessage[1]);
-      Serial3.write(generalStatusMessage[2]);
-      Serial3.write(generalStatusMessage[3]);
-      Serial3.write(generalStatusMessage[4]);
-      Serial3.write(generalStatusMessage[5]);
-      Serial3.write(generalStatusMessage[6]);  
-      */
-      
-      Serial3.write(generalStatusMessage, sizeof(generalStatusMessage));
-      Serial.println("Sent message");
-  }
-
-  if (sentOnce2 != true) { 
-    sentOnce2 = true;
- /*
-    for (int i = 0; i < sizeof(buf); i++) {
-      Serial.print(buf[i]);    
-      Serial3.write(buf,7);
-    }*/
-    int bytesSent = Serial3.write(buf, 7);
-   
-    Serial.println("");
+  if (sendRunTask == true) {
+    Serial.println("RUN_TASK_MESSAGE"); 
     
-    Serial.print("Bytes sent:");
-    Serial.println(bytesSent);
-  }      
+    sendToMyxa(0x8E, false); // delimiter
+    
+    uint8_t taskId = 0x03;
+    uint8_t frameType = 0x02;
+    uint8_t mechanicalRpmControlMode = 0x04;
 
+    float rpmSpeed = 1000;
+    byte rpmSpeedBytes[4];
+    float2Bytes(rpmSpeed, &rpmSpeedBytes[0]);
+    
+    uint8_t payloadAndFrameType[13] = 
+    { 
+      taskId, 0x00, 0x00, 0x00, 
+      mechanicalRpmControlMode, 0x00, 0x00, 0x00,
+      rpmSpeedBytes[3], rpmSpeedBytes[2], rpmSpeedBytes[1], rpmSpeedBytes[0], //litle endian byte order 
+      frameType
+    };
+    sendToMyxa(payloadAndFrameType, ARRAY_SIZE(payloadAndFrameType), true);
+    
+    //crc32c
+    byte crc32cBytes[4];  
+    crc32c_bytes_little_endian(payloadAndFrameType, 1, crc32cBytes);
+    sendToMyxa(crc32cBytes, ARRAY_SIZE(crc32cBytes), true);
+    
+    sendToMyxa(0x8E, false); // delimiter
+    
+    Serial.println("Sent message");
+    sendRunTask = false;
+  }
+  
   if (Serial3.available() > 0) {
     Serial.println(Serial3.read());
   }
 }
 
-/* This is the basic CRC-32 calculation with some optimization but no
-table lookup. The the byte reversal is avoided by shifting the crc reg
-right instead of left and by using a reversed 32-bit word to represent
-the polynomial.
-   When compiled to Cyclops with GCC, this function executes in 8 + 72n
-instructions, where n is the number of bytes in the input message. It
-should be doable in 4 + 61n instructions.
-   If the inner loop is strung out (approx. 5*8 = 40 instructions),
-it would take about 6 + 46n instructions. */
+void sendToMyxa(uint8_t byteVal[], int sizeOfArray, boolean escape) {
+  for (int i=0; i < sizeOfArray; i++) {     
+    sendToMyxa(byteVal[i], escape);
+  }
+}
 
-unsigned int crc32b(unsigned char *message) {
-   int i, j;
-   unsigned int byte, crc, mask;
-
-   i = 0;
-   crc = 0xFFFFFFFF;
-   while (message[i] != 0) {
-      byte = message[i];            // Get next byte.
-      crc = crc ^ byte;
-      for (j = 7; j >= 0; j--) {    // Do eight times.
-         mask = -(crc & 1);
-         crc = (crc >> 1) ^ (0xEDB88320 & mask);
-      }
-      i = i + 1;
-   }
-   return ~crc;
+void sendToMyxa(uint8_t byteVal, boolean escape) {
+  byte byteToSend = byteVal;
+  if (escape == true && byteVal == 0x8E) {
+    Serial.print("(Escape character)");
+    sendToMyxa(0x9E, false);
+    byteToSend = ~byteVal & 0xff;
+    Serial.print("(Inverted value of escaped character)");
+  }
+  
+  Serial.println(byteToSend, HEX);
+  Serial3.write(byteToSend);
 }
 
 uint32_t crc32c(uint8_t *buf, int len)
@@ -176,3 +164,25 @@ uint32_t crc32c(uint8_t *buf, int len)
 	}
 	return crc^0xffffffff;
 };
+
+void * crc32c_bytes_little_endian(uint8_t *buf, int len, byte toByteArray[])
+{
+  uint32_t uint32_value = crc32c(buf, len);
+
+  toByteArray[3] = (uint32_value >> 24) & 0xFF;
+  toByteArray[2] = (uint32_value >> 16) & 0xFF;
+  toByteArray[1] = (uint32_value >> 8) & 0xFF;
+  toByteArray[0] = uint32_value & 0xFF;
+};
+
+void float2Bytes(float val,byte* bytes_array){
+  // Create union of shared memory space
+  union {
+    float float_variable;
+    byte temp_array[4];
+  } u;
+  // Overite bytes of union with float variable
+  u.float_variable = val;
+  // Assign bytes to input array
+  memcpy(bytes_array, u.temp_array, 4);
+}
