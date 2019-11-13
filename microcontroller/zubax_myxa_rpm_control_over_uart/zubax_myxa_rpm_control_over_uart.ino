@@ -99,6 +99,7 @@ void loop() {
     sendGeneralStatusMessage = false;
   }
   
+//Right now it sends: 8E 3 0 0 0 4 0 0 0 0 0 7A 44 2 A5 A0 2D 41 8E 
   if (sendRunTask == true) {
     Serial.println("RUN_TASK_MESSAGE"); 
     
