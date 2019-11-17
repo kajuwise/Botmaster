@@ -1,0 +1,3 @@
+[submodule "microcontroller/zubax-myxa-uart-codec"]
+	path = microcontroller/zubax-myxa-uart-codec
+	url = https://github.com/kajuwise/Zubax-Myxa-uart-codec-avr
