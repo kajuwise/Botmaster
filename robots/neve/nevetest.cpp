@@ -31,7 +31,7 @@ RobotTestTool *robotTestToolWindow;
 
 NeveTest::NeveTest()
 {
-    robotTestToolWindow = new RobotTestTool(&omniTestDirDeg, &omniTestVelocityBody, &omniTestVelocityAngular, &throwerTestPwm);
+    robotTestToolWindow = new RobotTestTool(&omniTestDirDeg, &omniTestVelocityBody, &omniTestVelocityAngular, &throwerTestPwm, &throwerTestRpm);
     robotTestToolWindow->setWindowTitle(QString::fromUtf8("Robot test tool"));
 }
 
@@ -94,6 +94,11 @@ void NeveTest::go() {
             setDcMotor(3, throwerTestPwm);
             conf.setSendCmdEnabled(0);
         }
+
+
+        conf.setSendCmdEnabled(1);
+        setDcMotor(4, throwerTestRpm);
+        conf.setSendCmdEnabled(0);
 
 		selection = conf.keyS;
 		switch(selection) {

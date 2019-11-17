@@ -82,7 +82,8 @@ const char* getFrameFromCameraNr = CAMERA_FRONT;
 //    const char* getFrameFromCameraNr = CAMERA_RIGHT;
 
 bool testToolEnabled = false;
-int pwmTestValue = 30;
+int throwerPwmTestValue = 0;
+int throwerRpmTestValue = 0;
 
 QTime timerLastDistronicTurn;
 QTime inCurrentStateTime;
@@ -109,7 +110,7 @@ void Neve::go() {
         int testPar1 = 0;
         int testPar2 = 0;
         int testPar3 = 0;
-        RobotTestTool * robotTestTool = new RobotTestTool(&testPar1, &testPar2, &testPar3, &pwmTestValue);
+        RobotTestTool * robotTestTool = new RobotTestTool(&testPar1, &testPar2, &testPar3, &throwerPwmTestValue, &throwerRpmTestValue);
         robotTestTool->show();
     }
 
@@ -170,7 +171,11 @@ void Neve::go() {
 
         if (testToolEnabled) {
             conf.setSendCmdEnabled(1);
-            setDcMotor(3, pwmTestValue);
+            setDcMotor(3, throwerPwmTestValue);
+            conf.setSendCmdEnabled(0);
+
+            conf.setSendCmdEnabled(1);
+            setDcMotor(4, throwerRpmTestValue);
             conf.setSendCmdEnabled(0);
         }
 
@@ -671,7 +676,7 @@ void Neve::squareDriveTest() {
 }
 
 void Neve::resetRemoteCtrl() {
-    setDcMotor(4, 1); //last night hack. 166 binded to reset remoteCommand in microcontroller
+    setDcMotor(100, 1); //last night hack. 100 binded to reset remoteCommand in microcontroller
 }
 
 void Neve::printGoalInfo() {

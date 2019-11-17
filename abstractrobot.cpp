@@ -11,6 +11,9 @@
  */
 #include "abstractrobot.h"
 
+#define MOTOR_ZERO_CMD 162
+#define MOTION_CMD 300
+
 AbstractRobot::AbstractRobot()
 {
 
@@ -153,13 +156,12 @@ void AbstractRobot::setDcMotor(int motor, int speed, int nr)
 	fprintf(stderr,"ERROR: DC motor nr %d out of range\n",motor);
 	return;
   }
-
-  com->sendCommand(162 + motor, speed, nr);
+  com->sendCommand(MOTOR_ZERO_CMD + motor, speed, nr);
 }
 
 void AbstractRobot::setOmni(int dirDeg, int velocityBody, int velocityAngular)
 {
-  com->sendCommand3(300, dirDeg, velocityBody, velocityAngular);
+  com->sendCommand3(MOTION_CMD, dirDeg, velocityBody, velocityAngular);
 }
 
 /**

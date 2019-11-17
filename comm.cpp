@@ -15,6 +15,7 @@
 #include <iostream>
 #include <errno.h>
 #include <stdlib.h>
+#include <QDebug>
 
 Comm::Comm()
 {
@@ -234,9 +235,9 @@ int Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
     
     if ((buf[i] == ',' || buf[i] == '\n') && start > -1) {
       if(j<8){
-	analogs[j] = atoi(&buf[start]);
+        analogs[j] = atoi(&buf[start]);
       }else{
-	digitals[j-8] = atoi(&buf[start]);
+        digitals[j-8] = atoi(&buf[start]);
       }
       
       j++;
@@ -315,7 +316,9 @@ int Comm::serialMultiResponse(int * analogs, int * digitals, int nr){
   do {
     len = read(fds[nr], &buf[buf_len], 255 - buf_len);
     buf_len += len;
-    if (len < 1 || buf_len > 254) {return 1;}
+    if (len < 1 || buf_len > 254) {
+        return 1;
+    }
   } while (buf[buf_len-1] != '\n');
 
   int i, j;

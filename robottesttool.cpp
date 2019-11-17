@@ -4,7 +4,7 @@
 #include <QMenu>
 #include <QAction>
 
-RobotTestTool::RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, int * omniTestVelocityAngular, int * throwerTestPwm)
+RobotTestTool::RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, int * omniTestVelocityAngular, int * throwerTestPwm, int* throwerTestRpm)
 {
   Config & temp =Config::getConfig();
   conf = & temp;
@@ -38,6 +38,7 @@ RobotTestTool::RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, i
 
   //Thrower test
   new RobotTestToolItem("Thrower pwm", throwerTestPwm, throwerTabLayout, 0, 255);
+  new RobotTestToolItem("Thrower RPM", throwerTestRpm, throwerTabLayout, 0, 25000);
 }
 
 void RobotTestTool::toggleBool(bool * boolean) {

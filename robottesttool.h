@@ -11,7 +11,7 @@ class RobotTestTool: public QMainWindow
   Q_OBJECT
 
   public:
-    RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, int * omniTestVelocityAngular, int * throwerTestPwm);
+    RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, int * omniTestVelocityAngular, int * throwerTestPwm, int * throwerTestRpm);
     ~ RobotTestTool(){};
     void toggleBool(bool *);
 
