@@ -151,6 +151,7 @@ public:
 	 */
     void setDcMotor(int motor, int speed, int nr);
     void setOmni(int dirDeg, int velocityBody, int velocityAngular);
+    void setThrowerCommand(int requestedRpm, int precision);
     void setDigital(unsigned char pin_nr);
     void setDigital(unsigned char pin_nr, int nr);
     void clearDigital(unsigned char pin_nr);

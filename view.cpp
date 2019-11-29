@@ -126,6 +126,9 @@ void View::show(IplImage * image)
     case '7':
         conf->keyS = key;
         break;
+    case '8':
+        conf->keyS = key;
+        break;
     case 'l':
         conf->keyS = key;
         qDebug() << "Pressed L";

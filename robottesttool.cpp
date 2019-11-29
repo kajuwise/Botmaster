@@ -37,7 +37,7 @@ RobotTestTool::RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, i
   new RobotTestToolItem("Omni velocityAngular", omniTestVelocityAngular, omniTabLayout, -255, 255);
 
   //Thrower test
-  new RobotTestToolItem("Thrower pwm", throwerTestPwm, throwerTabLayout, 0, 255);
+  new RobotTestToolItem("Roller pwm", throwerTestPwm, throwerTabLayout, 0, 256);
   new RobotTestToolItem("Thrower RPM", throwerTestRpm, throwerTabLayout, 0, 25000);
 }
 

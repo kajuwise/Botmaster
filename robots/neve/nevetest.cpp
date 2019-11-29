@@ -40,6 +40,7 @@ NeveTest::~NeveTest()
 }
 
 void NeveTest::motorTest() {
+    qDebug() << "Performing motor test";
 	int i;
 	
 	for (i = 0; i < 3; i++) {
@@ -72,7 +73,8 @@ void NeveTest::go() {
 
     conf.setSendCmdEnabled(1);
     setOmni(0,0,0);
-    setDcMotor(3,0);
+    setDcMotor(3,255);
+    setThrowerCommand(0,0);
     conf.setSendCmdEnabled(0);
 
     while(1) {
@@ -83,29 +85,35 @@ void NeveTest::go() {
         image->process(fieldTop);
 		getSensorsResponse();
 		
+
         if (abs(omniTestDirDeg) > 0 || abs(omniTestVelocityBody) >> 0 || abs(omniTestVelocityAngular) > 0) {
             conf.setSendCmdEnabled(1);
             setOmni(omniTestDirDeg, omniTestVelocityBody, omniTestVelocityAngular);
             conf.setSendCmdEnabled(0);
         }
 
-        if (abs(throwerTestPwm) > 0) {
+        if (throwerTestPwm <= 255) {
+            int pwm = throwerTestPwm > 100 ? 255 : throwerTestPwm;
             conf.setSendCmdEnabled(1);
-            setDcMotor(3, throwerTestPwm);
+            setDcMotor(3, pwm);
             conf.setSendCmdEnabled(0);
         }
 
 
-        conf.setSendCmdEnabled(1);
-        setDcMotor(4, throwerTestRpm);
-        conf.setSendCmdEnabled(0);
+        if (throwerTestRpm >= 1) {
+            int rpm = throwerTestRpm < 250 ? 0 : throwerTestRpm;
+            conf.setSendCmdEnabled(1);
+            setDcMotor(4, rpm);
+            conf.setSendCmdEnabled(0);
+        }
 
 		selection = conf.keyS;
 		switch(selection) {
             case '1':
 				sprintf(str, "Motor test");
 				if (conf.getSendCmdEnabled()) {
-					motorTest();
+                    qDebug("MOTOR TEST;");
+                    motorTest();
 					conf.setSendCmdEnabled(0);
 				}
 				break;
@@ -151,10 +159,20 @@ void NeveTest::go() {
                     conf.setSendCmdEnabled(0);
                 }
                 break;
+            case '8':
+                sprintf(str, "Thrower command");
+                if (conf.getSendCmdEnabled()) {
+                    qDebug("Sending thrower command for 4000 RPM with 5 percent precision.");
+                    setThrowerCommand(4000, 5);
+                    setDcMotor(4, 4000);
+                    conf.setSendCmdEnabled(0);
+                }
+                break;
             case 'x':
                 conf.setSendCmdEnabled(1);
                 setOmni(0,0,0);
-                setDcMotor(3,0);
+                setDcMotor(4,0);
+                setThrowerCommand(-1,-1);
                 exit(2);
                 break;
             case 'l':
@@ -226,7 +244,7 @@ void NeveTest::go() {
 		
 		for (i = 0; i < 8; i++) {
 			sprintf(str, "D%d %d", i, digital[i]);
-			cvPutText(_img, str, cvPoint(250, height), &(image->font), CV_RGB(0,0,0));
+            cvPutText(_img, str, cvPoint(250, height), &(image->font), CV_RGB(66, 226, 244));
 			height += 20;
 		}
 		

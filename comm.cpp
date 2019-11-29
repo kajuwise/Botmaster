@@ -10,6 +10,7 @@
  * @author Valdur Kaldvee (C) 2008
  * @author Margus Ernits <margus.ernits@itcollege.ee>, (C) 2008
  * @author Mauno Pihelgas <mpihelga@itcollege.ee>, (C) 2010
+ * @author Erik Kaju
  */
 #include "comm.h"
 #include <iostream>

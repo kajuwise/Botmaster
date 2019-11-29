@@ -13,6 +13,7 @@
 
 #define MOTOR_ZERO_CMD 162
 #define MOTION_CMD 300
+#define THROWER_CMD 400
 
 AbstractRobot::AbstractRobot()
 {
@@ -162,6 +163,11 @@ void AbstractRobot::setDcMotor(int motor, int speed, int nr)
 void AbstractRobot::setOmni(int dirDeg, int velocityBody, int velocityAngular)
 {
   com->sendCommand3(MOTION_CMD, dirDeg, velocityBody, velocityAngular);
+}
+
+void AbstractRobot::setThrowerCommand(int requestedRpm, int precision)
+{
+  com->sendCommand3(THROWER_CMD, requestedRpm, precision, 0);
 }
 
 /**

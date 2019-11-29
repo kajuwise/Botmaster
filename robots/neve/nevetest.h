@@ -41,7 +41,7 @@ public:
     int omniTestDirDeg = 0;
     int omniTestVelocityBody = 0;
     int omniTestVelocityAngular = 0;
-    int throwerTestPwm = 0;
+    int throwerTestPwm = 256;
     int throwerTestRpm = 0;
 
 	  
