@@ -37,8 +37,8 @@ RobotTestTool::RobotTestTool(int * omniTestDirDeg, int * omniTestVelocityBody, i
   new RobotTestToolItem("Omni velocityAngular", omniTestVelocityAngular, omniTabLayout, -255, 255);
 
   //Thrower test
-  new RobotTestToolItem("Roller pwm", throwerTestPwm, throwerTabLayout, 0, 256);
-  new RobotTestToolItem("Thrower RPM", throwerTestRpm, throwerTabLayout, 0, 25000);
+  new RobotTestToolItem("Roller", throwerTestPwm, throwerTabLayout, 0, 255);
+  new RobotTestToolItem("Thrower RPM", throwerTestRpm, throwerTabLayout, 0, 13000);
 }
 
 void RobotTestTool::toggleBool(bool * boolean) {

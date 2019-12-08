@@ -13,12 +13,14 @@ char* StateHolder::toString() const
     {
         case Neve::WAITING_START: return "WAITING_START"; //1
         case Neve::FIND_BALL: return "FIND_BALL"; //2
-        case Neve::IMPROVE_CONTACT_WITH_BALL: return "IMPROVE_CONTACT_WITH_BALL"; //3
+        case Neve::STAND_AND_CENTER_ON_BALL: return "STAND_AND_CENTER_ON_BALL"; //3
         case Neve::ESCAPE_BLACK_LINE: return "ESCAPE_BLACK_LINE";
         case Neve::START_ESCAPE_BLACK_LINE: return "START_ESCAPE_BLACK_LINE";
         case Neve::DISTRONIC_TURN: return "DISTRONIC_TURN";
         case Neve::ESCAPE_GOAL_TOO_CLOSE: return "GOAL_TOO_CLOSE";
-        case Neve::THROW: return "THROW";
+        case Neve::GRAB_BALL: return "GRAB BALL";
+        case Neve::AIM_TO_SHOOT: return "AIM TO SHOOT";
+        case Neve::SHOOT: return "SHOOTING";
 
     }
 }

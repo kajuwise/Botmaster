@@ -153,7 +153,7 @@ void AbstractRobot::setDcMotor(int motor, int speed)
 }
 void AbstractRobot::setDcMotor(int motor, int speed, int nr)
 {
-  if(motor<0 || motor>4) {
+  if((motor<0 || motor>5) && (motor != 100 /* remote */) ) {
 	fprintf(stderr,"ERROR: DC motor nr %d out of range\n",motor);
 	return;
   }

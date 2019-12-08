@@ -1,4 +1,4 @@
-#define THROWER_PIN 9
+#define THROWER_PIN 11
 
 void setup() {
   Serial.begin(115200);
