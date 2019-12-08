@@ -32,12 +32,15 @@ public:
     enum State {
         WAITING_START,                            //          "WAITING_START"; //1
         FIND_BALL,                                //      "FIND_BALL"; //2
-        IMPROVE_CONTACT_WITH_BALL,                //                      "IMPROVE_CONTACT_WITH_BALL"; //3
+        STAND_AND_CENTER_ON_BALL,                //                      "IMPROVE_CONTACT_WITH_BALL"; //3
         ESCAPE_BLACK_LINE,                        //              "ESCAPE_BLACK_LINE";
         START_ESCAPE_BLACK_LINE,                  //                    "START_ESCAPE_BLACK_LINE";
         DISTRONIC_TURN,                           //           "DISTRONIC_TURN";
         ESCAPE_GOAL_TOO_CLOSE,
-        THROW,
+        GRAB_BALL,
+        AIM_TO_SHOOT,
+        SHOOT,
+        SHOOTING_IN_PROGRESS
     };
 
 
@@ -56,7 +59,7 @@ public:
     void getCvPointCalc(CvPoint* inputCvPoint, float* distance, float* angle, const char* cameraDevice);
 
     int centerOnGoal(Image::Object goal, int turnSpeed);
-    void getGoalAimDirection(State state);
+    void getGoalAimDirection(int* basketSpinDirection, float* targetGoalArea, float* targetGoalAngle);
     void squareDriveTest();
     
     void nearGoalSpeedLimiter(Image::Object* goalOwn, Image::Object* goalTarget,int* forwardSpeed);
@@ -89,7 +92,9 @@ private:
     bool doDistronicTurnBasedOnGoalPosition(const char* cameraDevice);
     BallState getBallSocketState() const;
     bool isCloseToGoal() const;
-    void setThrowerSpeedIfBasketIsSeen();
+    void setThrowerRpmIfBasketIsSeen();
+    void setThrowerRpm(int rpm);
+    int calculateThrowerRpm(int distance);
     float getThrowAngleCorrectionRelativeToField();
 
 

@@ -17,8 +17,12 @@
 #define ZUBAX_MYXA_GENERAL_STATUS_MESSAGE_TYPE 0x00
 #define ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM 0x04
 
-#define ZUBAX_MYXA_RUN_TASK_HOLDUP_MS 50
-#define ZUBAX_MYXA_STATUS_CMD_HOLDUP_MS 200
+#define ZUBAX_MYXA_RUN_TASK_HOLDUP_MS 150
+#define ZUBAX_MYXA_STATUS_CMD_HOLDUP_MS 120
+
+#define THROWER_PWM_PIN 11
+
+#define THROWER_HALT_PWM 255
 
 uint32_t crctable[256]={
   0x00000000L,0xF26B8303L,0xE13B70F7L,0x1350F3F4L,
@@ -107,14 +111,18 @@ uint32_t crctable[256]={
 #define M2_MONITOR_PIN 24
 
 #define ROLLER_PWM_PIN 9
-#define ROLLER_HALT_PWM 255
+#define ROLLER_HALT_PWM 0
+#define ROLLER_OPERATING_PWM 254
 
 #define EZ_RC_PIN 46
+#define START_BUTTON_PIN 47
 
-#define THROWER_STATE_STANDBY -1
-#define THROWER_STATE_COLLECTING 0
-#define THROWER_STATE_HOLDING 1
-#define THROWER_STATE_THROWING 2
+#define LIDAR_MEASUREMENT_DELAY 150
+
+#define THROWER_STATE_STANDBY 111
+#define THROWER_STATE_COLLECTING 122
+#define THROWER_STATE_HOLDING 133
+#define THROWER_STATE_THROWING 144
 #define THROWER_BALL_DETECTION_SIGNAL 250
 
 int throwerState = THROWER_STATE_STANDBY;
@@ -211,9 +219,9 @@ int throwerRpm = 0;
 void setup()
 {
 
-  setupMyxaMicrocontroller(myxaInstance1, &Serial3, 115200, &Serial, 115200, false, ZUBAX_MYXA_STATUS_CMD_HOLDUP_MS, ZUBAX_MYXA_RUN_TASK_HOLDUP_MS);
-  sendMyxaHardwareTestTask(myxaInstance1);
-  delay(4000); //myxa boot-up time
+  //setupMyxaMicrocontroller(myxaInstance1, &Serial3, 115200, &Serial, 115200, false, ZUBAX_MYXA_STATUS_CMD_HOLDUP_MS, ZUBAX_MYXA_RUN_TASK_HOLDUP_MS);
+  //sendMyxaHardwareTestTask(myxaInstance1);
+  //delay(4000); //myxa boot-up time
   
   motorInit();
   //beaconInit();
@@ -229,6 +237,8 @@ void setup()
   pinMode(45, OUTPUT);
   
   pinMode(EZ_RC_PIN, INPUT);
+
+  pinMode(THROWER_PWM_PIN, OUTPUT);
   
   Serial.begin(115200); //motherboard
   Serial1.begin(TFMINI_BAUDRATE); //tfmini
@@ -245,9 +255,20 @@ void lidarInit() {
 
 uint16_t lidarDistanceMeasurement = -1;
 
+float calculateRpmByLidar() {
+    float linear = 19.0018648652*lidarDistanceMeasurement + 4104.3040100777;
+    throwerRpm = (linear * 0.5);
+}
+
 void loop()
 { 
- // takeLidarDistanceMeasurement();
+
+  takeLidarDistanceMeasurement();
+  // calculateRpmByLidar();
+  
+  //sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, (float) throwerRpm);
+  //requestMyxaGeneralStatusMessage(myxaInstance1);
+  //readMyxaSerial(myxaInstance1);
   
   readSerial();
   readAnalogs();
@@ -277,11 +298,7 @@ void loop()
     digitalWrite(45, 0);
     setRobot = 'A';
   }
-
-  sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, (float) throwerRpm);
-  requestMyxaGeneralStatusMessage(myxaInstance1);
-  readMyxaSerial(myxaInstance1);
-
+  
   readRemote(&field, &robot, &start);
   
   //while (1) squareDriveTest();
@@ -309,16 +326,22 @@ void motorInit() {
   //Roller and thrower test - show me that you spin!
   unsigned long stopMotorTestAtMs = millis() + 1000;
   while(stopMotorTestAtMs > millis()) {
-    sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, 1000.0);
-    setRollerPwm(0);
+    //sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, 1000.0);
+    setRollerPwm(ROLLER_OPERATING_PWM);
+    sendThrowerPwm(40);
   }
-  sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, throwerRpm);
+  //sendMyxaRunTask(myxaInstance1, ZUBAX_MYXA_CONTROL_MODE_MECHANICAL_RPM, throwerRpm);
   setRollerPwm(ROLLER_HALT_PWM);
+  sendThrowerPwm(0);
 }
 
+unsigned long lastLidarMeasurement = millis();
 void takeLidarDistanceMeasurement() {
-  tfmini.externalTrigger();
-  lidarDistanceMeasurement = tfmini.getDistance();  
+  if (lastLidarMeasurement + LIDAR_MEASUREMENT_DELAY < millis() ) {
+    tfmini.externalTrigger();
+    lidarDistanceMeasurement = tfmini.getDistance(); 
+    lastLidarMeasurement = millis();   
+  }
 }
 
 void decideThrowerAction() {
@@ -337,17 +360,18 @@ void decideThrowerAction() {
       throwerState = THROWER_STATE_COLLECTING;  
     }
   } else if (throwerState == THROWER_STATE_COLLECTING) {
-    setRollerPwm(0);
+    setRollerPwm(ROLLER_OPERATING_PWM);
   } else if (throwerState == THROWER_STATE_THROWING) {
     if (throwerCommand.isInvalidated == false) {
-      int rpmTo = (100+throwerCommand.requestedPrecisionPercentage)/100*throwerCommand.requestedRpm;
-      int rpmFrom = (100-throwerCommand.requestedPrecisionPercentage)/100*throwerCommand.requestedRpm;
-      if (rpmFrom <= myxaInstance1.motorReadings.mechanicalRpm && myxaInstance1.motorReadings.mechanicalRpm <= rpmTo) {
-        setRollerPwm(0);
-        Serial.print("Throwing at ");
-        Serial.println(myxaInstance1.motorReadings.mechanicalRpm);
+
+     // int targetRpm = throwerRpm; //throwerCommand.requestedRpm;
+      
+     // int rpmTo = (100+throwerCommand.requestedPrecisionPercentage)/100*throwerCommand.requestedRpm;
+     // int rpmFrom = (100-throwerCommand.requestedPrecisionPercentage)/100*throwerCommand.requestedRpm;
+      //if (rpmFrom <= myxaInstance1.motorReadings.mechanicalRpm && myxaInstance1.motorReadings.mechanicalRpm <= rpmTo) {
+        setRollerPwm(ROLLER_OPERATING_PWM);
         invalidateThrowerCommand();
-      }  
+      //}  
     } else if (!ballCaptured()) {
       throwerState = THROWER_STATE_COLLECTING;
     }
@@ -418,7 +442,7 @@ void parseCommand(char* str){
   int cmdCode = atoi(str);
 
   if (isNewCmd) {
-    if (cmdCode == 100 || cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 165 || cmdCode == 166 || cmdCode == 300 || cmdCode == 400) {
+    if (cmdCode == 100 || cmdCode == 162 || cmdCode == 163 || cmdCode == 164 || cmdCode == 165 || cmdCode == 166 || cmdCode == 167 || cmdCode == 300 || cmdCode == 400) {
       isNewCmd = false;
       lastCmd = cmdCode;
       return;
@@ -447,7 +471,10 @@ void parseCommand(char* str){
         setRollerPwm(cmdCode);
         break;
       case 166:
-        throwerRpm = cmdCode;
+        //throwerRpm = cmdCode;
+        break;
+      case 167:
+        throwerCtrl(cmdCode);
         break;
       case 100:
         remoteCode = 0;
@@ -461,6 +488,32 @@ void parseCommand(char* str){
     }
   }
   isNewCmd = true;
+}
+
+/* Thrower function for Zubax Myxa controller settings:
+rcpwm
+  ctl_mode 1
+  enable True
+  pulse
+    bot 0.000100000
+    hyst 2.00000e-05
+    mid 0.00180000
+    top 0.00200000
+  pulse dur nan
+  rescaled 0.0
+  ttl 0.3
+*/
+/* 0 will stop, positive will throw, negative will 'keep' */
+void throwerCtrl(int throwerControlValue) {
+    return sendThrowerPwm(THROWER_HALT_PWM - throwerControlValue);  
+}
+
+void sendThrowerPwm(int pwm) {
+  analogWrite(THROWER_PWM_PIN, pwm);
+}
+
+void throwerHalt() {
+  throwerCtrl(0);
 }
 
 bool readRemote(char* field, char* robot, bool* start) {
@@ -523,7 +576,6 @@ bool readRemote(char* field, char* robot, bool* start) {
 }
 
 void getMesasurments() {
-  int startButton = digitalRead(47);
   
   Serial.print(analog[0]);
   Serial.print(",");
@@ -546,7 +598,7 @@ void getMesasurments() {
   Serial.print(",");
   Serial.print(fieldButton);
   Serial.print(",");
-  Serial.print(startButton);
+  Serial.print(digitalRead(START_BUTTON_PIN));
   Serial.print(",");
   Serial.print(digitalRead(EZ_RC_PIN));
   Serial.print(",");

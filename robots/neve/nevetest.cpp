@@ -73,7 +73,7 @@ void NeveTest::go() {
 
     conf.setSendCmdEnabled(1);
     setOmni(0,0,0);
-    setDcMotor(3,255);
+    setDcMotor(3,0);
     setThrowerCommand(0,0);
     conf.setSendCmdEnabled(0);
 
@@ -92,20 +92,23 @@ void NeveTest::go() {
             conf.setSendCmdEnabled(0);
         }
 
-        if (throwerTestPwm <= 255) {
-            int pwm = throwerTestPwm > 100 ? 255 : throwerTestPwm;
+        /*
+        if (throwerTestPwm > 0) {
             conf.setSendCmdEnabled(1);
-            setDcMotor(3, pwm);
-            conf.setSendCmdEnabled(0);
-        }
+                //setThrowerCommand(0,0); //set roller state to "collecting"
+                setDcMotor(5, throwerTestPwm);
+           //
+           conf.setSendCmdEnabled(0);
+        }*/
 
-
+/*
         if (throwerTestRpm >= 1) {
             int rpm = throwerTestRpm < 250 ? 0 : throwerTestRpm;
             conf.setSendCmdEnabled(1);
             setDcMotor(4, rpm);
             conf.setSendCmdEnabled(0);
         }
+*/
 
 		selection = conf.keyS;
 		switch(selection) {
@@ -161,17 +164,33 @@ void NeveTest::go() {
                 break;
             case '8':
                 sprintf(str, "Thrower command");
+
                 if (conf.getSendCmdEnabled()) {
                     qDebug("Sending thrower command for 4000 RPM with 5 percent precision.");
-                    setThrowerCommand(4000, 5);
-                    setDcMotor(4, 4000);
+                    setThrowerCommand(throwerTestRpm, 5);
+                    setDcMotor(4, throwerTestRpm);
                     conf.setSendCmdEnabled(0);
                 }
+
+
+                break;
+
+            case '9':
+                sprintf(str, "pwm thrower test");
+                if (conf.getSendCmdEnabled()) {
+                    setThrowerCommand(5, 5);
+                    conf.setSendCmdEnabled(0);
+                }
+
+                conf.setSendCmdEnabled(1);
+                setDcMotor(5, throwerTestPwm);
+                conf.setSendCmdEnabled(0);
                 break;
             case 'x':
                 conf.setSendCmdEnabled(1);
                 setOmni(0,0,0);
-                setDcMotor(4,0);
+                //setDcMotor(4,0);
+                setDcMotor(5,255);
                 setThrowerCommand(-1,-1);
                 exit(2);
                 break;
