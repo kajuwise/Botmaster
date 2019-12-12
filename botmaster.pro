@@ -11,7 +11,7 @@ CONFIG -= app_bundle
 TEMPLATE = app
 QMAKE_CXXFLAGS += -O3 -march=native -ftree-vectorize
 
-DEFINES += XI  #This is for NEVE only muhahahahahhah
+DEFINES += XI
 SOURCES += main.cpp \
     server.cpp \
     protocolparser.cpp \
@@ -19,7 +19,6 @@ SOURCES += main.cpp \
     robotfactory.cpp \
     config.cpp \
     comm.cpp \
-    arduinocomm.cpp \
     camera.cpp \
     objecttype.cpp \
     image.cpp \
@@ -28,7 +27,6 @@ SOURCES += main.cpp \
     sendthread.cpp \
     robots/neve/nevetest.cpp \
     robots/neve/neve.cpp \
-    robots/neve/robottestsuite.cpp \
     visiontime.cpp \
     capturethread.cpp \
     imagecalibrationtool.cpp \
@@ -43,7 +41,6 @@ HEADERS += server.h \
     robotfactory.h \
     config.h \
     comm.h \
-    arduinocomm.h \
     camera.h \
     objecttype.h \
     image.h \
@@ -52,7 +49,6 @@ HEADERS += server.h \
     sendthread.h \
     robots/neve/nevetest.h \
     robots/neve/neve.h \
-    robots/neve/robottestsuite.h \
     visiontime.h \
     capturethread.h \
     imagecalibrationtool.h \
