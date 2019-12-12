@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <QDebug>
+#include <iterator>
 
 Comm::Comm()
 {
@@ -184,12 +185,12 @@ int Comm::sendCommand3(int addr, int value1, int value2, int value3)
     return 0;
 }
 
-int Comm::readSerialMulti(char addr, int * analogs, int * digitals)
+int Comm::readSerialMulti(char addr, int * microControllerData)
 {
-	return readSerialMulti(addr, analogs, digitals, 0);
+    return readSerialMulti(addr, microControllerData, 0);
 }
 
-int Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
+int Comm::readSerialMulti(char addr, int * microControllerData, int nr)
 {
 //   isLocked.wait(&mutex);
   QMutexLocker locker(&mutex);
@@ -224,7 +225,9 @@ int Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
   do {
     len = read(fds[nr], &buf[buf_len], 255 - buf_len);
     buf_len += len;
-    if (len < 1 || buf_len > 254) {return 1;}
+    if (len < 1 || buf_len > 254) {
+        return 1;
+    }
   } while (buf[buf_len-1] != '\n');
 
   int i, j;
@@ -235,12 +238,7 @@ int Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
     if (isdigit(buf[i]) && start == -1) start = 0;
     
     if ((buf[i] == ',' || buf[i] == '\n') && start > -1) {
-      if(j<8){
-        analogs[j] = atoi(&buf[start]);
-      }else{
-        digitals[j-8] = atoi(&buf[start]);
-      }
-      
+      microControllerData[j] = atoi(&buf[start]);
       j++;
       start = i+1;
     }
@@ -251,22 +249,22 @@ int Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
 
   if (j != 16) {
 	std::cout<<"Values: "<<j<<" Buf: "<<buf<<" Len: "<<strlen(buf)<<std::endl;
-	std::cout<<analogs[0]<<std::endl;
-	std::cout<<analogs[1]<<std::endl;
-	std::cout<<analogs[2]<<std::endl;
-	std::cout<<analogs[3]<<std::endl;
-	std::cout<<analogs[4]<<std::endl;
-	std::cout<<analogs[5]<<std::endl;
-	std::cout<<analogs[6]<<std::endl;
-	std::cout<<analogs[7]<<std::endl;
-	std::cout<<digitals[8]<<std::endl;
-	std::cout<<digitals[9]<<std::endl;
-	std::cout<<digitals[10]<<std::endl;
-	std::cout<<digitals[11]<<std::endl;
-	std::cout<<digitals[12]<<std::endl;
-	std::cout<<digitals[13]<<std::endl;
-	std::cout<<digitals[14]<<std::endl;
-	std::cout<<digitals[15]<<std::endl;
+    std::cout<<microControllerData[0]<<std::endl;
+    std::cout<<microControllerData[1]<<std::endl;
+    std::cout<<microControllerData[2]<<std::endl;
+    std::cout<<microControllerData[3]<<std::endl;
+    std::cout<<microControllerData[4]<<std::endl;
+    std::cout<<microControllerData[5]<<std::endl;
+    std::cout<<microControllerData[6]<<std::endl;
+    std::cout<<microControllerData[7]<<std::endl;
+    std::cout<<microControllerData[8]<<std::endl;
+    std::cout<<microControllerData[9]<<std::endl;
+    std::cout<<microControllerData[10]<<std::endl;
+    std::cout<<microControllerData[11]<<std::endl;
+    std::cout<<microControllerData[12]<<std::endl;
+    std::cout<<microControllerData[13]<<std::endl;
+    std::cout<<microControllerData[14]<<std::endl;
+    std::cout<<microControllerData[15]<<std::endl;
   }
   
   return 1;
@@ -311,9 +309,8 @@ int Comm::requestSerialMulti(char addr, int nr)
 }
 
 
-int Comm::serialMultiResponse(int * analogs, int * digitals, int nr){
+int Comm::serialMultiResponse(int * microcontrollerData, int nr){
   int buf_len = 0;
-  //if((conf->getSendCmdEnabled())==0) return 1;
   do {
     len = read(fds[nr], &buf[buf_len], 255 - buf_len);
     buf_len += len;
@@ -322,49 +319,64 @@ int Comm::serialMultiResponse(int * analogs, int * digitals, int nr){
     }
   } while (buf[buf_len-1] != '\n');
 
-  int i, j;
-  int start = -1;
-  j = 0;
+  int serialBufferIndex, microControllerDataIndex;
+  microControllerDataIndex = 0;
 
-  for (i = 0; i < buf_len; i++) {
-    if (isdigit(buf[i]) && start == -1) start = 0;
-    
-    if ((buf[i] == ',' || buf[i] == '\n') && start > -1) {
-      if(j<8){
-	analogs[j] = atoi(&buf[start]);
-      }else{
-	digitals[j-8] = atoi(&buf[start]);
-      }
-      
-      j++;
-      start = i+1;
+  int data[MSG_MC_DATA_NR_ELEMENTS];
+  bool checksumValid = false;
+
+  bool readingNextIntChar = false;
+  for (serialBufferIndex = 0; serialBufferIndex < buf_len; serialBufferIndex++) {
+    if (serialBufferIndex == 0) {
+        if (buf[serialBufferIndex] == MSG_MC_DATA_HEADER) {
+            readingNextIntChar = true;
+            continue;
+        } else {
+            qDebug() << "Reading microcontroller data failed. Wrong message header:" << buf[serialBufferIndex];
+            return 1;
+        }
     }
 
-    if (j > 15 ) break;
+    if (buf[serialBufferIndex] == ',') {
+        readingNextIntChar = true;
+        continue;
+    } else if (isdigit(buf[serialBufferIndex]) || buf[serialBufferIndex] == '-'){
+        if (readingNextIntChar) {
+            if (microControllerDataIndex < MSG_MC_DATA_NR_ELEMENTS) {
+                data[microControllerDataIndex] = atoi(&buf[serialBufferIndex]);
+                microControllerDataIndex++;
+                readingNextIntChar = false;
+            } else {
+                int checksumInTheMessage = atoi(&buf[serialBufferIndex]);
+                checksumValid = checksumInTheMessage == fletcherChecksum(data,MSG_MC_DATA_NR_ELEMENTS);
+                if (!checksumValid) qDebug() << "Reading microcontroller data failed. Checksum was not right: " << checksumInTheMessage;
+                break;
+            }
+        }
+    } else {
+        qDebug() << "Reading microcontroller data failed. Unexpected character at index:" << serialBufferIndex << "=" << buf[serialBufferIndex];
+        return 1;
+    }
   }
 
-  if (j != 16) {
-	std::cout<<"Values: "<<j<<" Buf: "<<buf<<" Len: "<<strlen(buf)<<std::endl;
-	std::cout<<analogs[0]<<std::endl;
-	std::cout<<analogs[1]<<std::endl;
-	std::cout<<analogs[2]<<std::endl;
-	std::cout<<analogs[3]<<std::endl;
-	std::cout<<analogs[4]<<std::endl;
-	std::cout<<analogs[5]<<std::endl;
-	std::cout<<analogs[6]<<std::endl;
-	std::cout<<analogs[7]<<std::endl;
-	std::cout<<digitals[8]<<std::endl;
-	std::cout<<digitals[9]<<std::endl;
-	std::cout<<digitals[10]<<std::endl;
-	std::cout<<digitals[11]<<std::endl;
-	std::cout<<digitals[12]<<std::endl;
-	std::cout<<digitals[13]<<std::endl;
-	std::cout<<digitals[14]<<std::endl;
-	std::cout<<digitals[15]<<std::endl;
+  if (checksumValid) {
+      for (int i=0; i < MSG_MC_DATA_NR_ELEMENTS; i++) microcontrollerData[i] = data[i];
+      return 0;
+  } else {
+    qDebug() << "Reading microcontroller data failed. Checksum was not right";
+    return 1;
   }
-  return 1;
 }
 
+uint8_t Comm::fletcherChecksum(int * microcontrollerData, int dataLength) {
+    uint8_t sum1 = 0;
+    uint8_t sum2 = 0;
+    while (dataLength--){
+        sum1 += *microcontrollerData++;
+        sum2 += sum1;
+    }
+    return (sum1 & 0xF) | (sum2 << 4);
+}
 
 /*!
     \fn Comm::readSerial(char)

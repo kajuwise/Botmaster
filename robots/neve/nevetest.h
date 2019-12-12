@@ -11,18 +11,18 @@
 //
 #ifndef NEVE_TEST_H
 #define NEVE_TEST_H
-#include "robottestsuite.h"
 
 #include<QtGui>
 #include <QMainWindow>
+#include "abstractrobot.h"
 
-class NeveTest: public RobotTestSuite
+class NeveTest: public AbstractRobot
 {
 public:
 	NeveTest();
 	~NeveTest();
-      	void go();
-      	void msleep(long t) {usleep(t * 1000);}
+    void go();
+    void msleep(long t) {usleep(t * 1000);}
 	void motorTest();
 	void solenoidTest();
     void instaTurn(int angle);

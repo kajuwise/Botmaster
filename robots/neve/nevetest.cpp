@@ -77,14 +77,18 @@ void NeveTest::go() {
     setThrowerCommand(0,0);
     conf.setSendCmdEnabled(0);
 
+    char hello[] = "1,2,-3,4,5";
+    qDebug() << atoi(hello) << " must be 1";
+    qDebug() << atoi(&hello[2]) << " must be 2";
+    qDebug() << atoi(&hello[4]) << " must be -3";
+
     while(1) {
         requestSensors();
         readRobotAndFieldSwitches();
         readRemoteCtrl();
         _img = image->getFrame(getFrameFromCameraNr);
         image->process(fieldTop);
-		getSensorsResponse();
-		
+        getSensorsResponse();
 
         if (abs(omniTestDirDeg) > 0 || abs(omniTestVelocityBody) >> 0 || abs(omniTestVelocityAngular) > 0) {
             conf.setSendCmdEnabled(1);
@@ -253,7 +257,7 @@ void NeveTest::go() {
                 height = 120;
 
 		for (i = 0; i < 8; i++) {
-			sprintf(str, "A%d %d", i, analog[i]);
+            sprintf(str, "A%d %d", i, microcontrollerData[i]);
             cvPutText(_img, str, cvPoint(10, height), &(image->font), CV_RGB(66, 226, 244));
 			height += 20;
 		}
@@ -262,7 +266,7 @@ void NeveTest::go() {
                 height = 120;
 		
 		for (i = 0; i < 8; i++) {
-			sprintf(str, "D%d %d", i, digital[i]);
+            sprintf(str, "D%d %d", i, microcontrollerData[i+8]);
             cvPutText(_img, str, cvPoint(250, height), &(image->font), CV_RGB(66, 226, 244));
 			height += 20;
 		}
@@ -309,15 +313,15 @@ void NeveTest::sideStep(int angle, int distance) {
 QChar selectedRobot;
 QChar selectedField;
 void NeveTest::readRobotAndFieldSwitches() {
-    if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 0) {
+    if (microcontrollerData[DIGITAL_SIG_ROBOT_SELECTOR] == 0) {
         selectedRobot = QChar(RC_SIG_A);
-    } else if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 1) {
+    } else if (microcontrollerData[DIGITAL_SIG_ROBOT_SELECTOR] == 1) {
         selectedRobot = QChar(RC_SIG_B);
     }
 
-    if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 0) {
+    if (microcontrollerData[DIGITAL_SIG_FIELD_SELECTOR] == 0) {
         selectedField = RC_SIG_A;
-    } else if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 1) {
+    } else if (microcontrollerData[DIGITAL_SIG_FIELD_SELECTOR] == 1) {
         selectedField = RC_SIG_B;
     }
 }
@@ -339,7 +343,7 @@ void NeveTest::waitActionSignalFromRemoteCtrl(char action) {
 }
 
 bool NeveTest::isSignalTargeting(char action) {
-    int currentRemoteSignal = analog[1];
+    int currentRemoteSignal = microcontrollerData[MC_DATA_REMOTE_SIGNAL];
     if (currentRemoteSignal != lastRemoteSignal) {
         if (lastRemoteSignal != 0) {
             QString currentSignalQStr = QString::number(currentRemoteSignal);

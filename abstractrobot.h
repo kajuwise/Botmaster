@@ -4,10 +4,9 @@
  * 
  * @details Holds the abstract class AbstractRobot which all the robots inherit.
  * 
- * Copyright: See COPYING file that comes with this distribution
- * 
- * @author Margus Ernits <margus.ernits@itcollege.ee>, (C) 2008
- * @author Mauno Pihelgas <mpihelga@itcollege.ee>, (C) 2010
+ * @author Margus Ernits
+ * @author Mauno Pihelgas
+ * @author Erik Kaju
  */
 #ifndef ABSTRACTROBOT_H
 #define ABSTRACTROBOT_H
@@ -16,15 +15,22 @@
 #include "config.h"
 #include "image.h"
 #include "comm.h"
-#include "arduinocomm.h"
 #include "view.h"
 
-
+//todo move to abstract neve - once we have it
+#define MC_DATA_BALL_SENSOR 0
+#define MC_DATA_REMOTE_SIGNAL 1
+#define MC_DATA_ROBOT_SELECTOR 8
+#define MC_DATA_FIELD_SELECTOR 9
+#define MC_DATA_START_BUTTON 10
+#define MC_DATA_EZ_RC 11
+#define MC_DATA_MYXA_RPM 12
+#define MC_DATA_LIDAR_DISTANCE 13
+#define MC_DATA_ROLLER_STATE 14
 
 /**
  * @brief This abstract class holds functions that are common to all robots.
- * @author Margus Ernits <margus.ernits@itcollege.ee>
- * @author Mauno Pihelgas <mpihelga@itcollege.ee>
+ * @author Margus Ernits, Mauno Pihelgas, Erik Kaju
  */
 
 //TODO Aadresside ja kommunikatsiooni vaheline vastavustabel
@@ -36,48 +42,7 @@ public:
     
 	/// @brief Virtual function which can be over-ridden within an inhereting class (individual robots).
     virtual void go()=0;
-	
-	/// @deprecated This function is deprecated. Use getServo(int servo, int nr) instead.
-    int getServo(int servo);
-	/**
-	 * @brief Reads the value of a given servo from the numbered (@a nr) serial device.
-	 * @param servo - Number of a @a servo on a serial device (valid input: 0-9)
-	 * @param nr - Serial device number
-	 * @return Servo value returned from the serial device ADC
-	 */
-    int getServo(int servo, int nr);
-	
-	/// @deprecated This function is deprecated. Use getAnalog(int analog_no, int nr) instead.
-    int getAnalog(int analog_no);
-	/**
-	 * @brief Reads the value of a given analog sensor from the numbered (@a nr) serial device.
-	 * @param analog_no - Number of an analog sensor on a serial device
-	 * @param nr - Serial device number
-	 * @return Analog sensor value returned from the serial device ADC
-	 */
-    int getAnalog(int analog_no, int nr);
-	
-	/// @deprecated This function is deprecated. Use getAnalogs(int nr) instead.
-    int getAnalogs();
 
-	/**
-	 * @brief Reads all sensor values from the numbered (@a nr) serial device into two arrays: analog[8] and digital[8].
-	 * @param nr - Serial device number
-	 * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
-	 * @see Equivalent to getSensors(int nr)
-	 */
-    int getAnalogs(int nr);
-	
-	/// @deprecated This function is deprecated. Use getSensors(int nr) instead.
-    int getSensors();
-
-	/**
-	 * @brief Reads all sensor values from the numbered (@a nr) serial device into two arrays: analog[8] and digital[8].
-	 * @param nr - Serial device number
-	 * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
-	 * @see Equivalent to getAnalogs(int nr)
-	 */
-    int getSensors(int nr);
 
 	/// @deprecated This function is deprecated. Use requestSensors(int nr) instead.
     int requestSensors();
@@ -101,44 +66,6 @@ public:
 	 * @see Equivalent to getAnalogs(int nr)
 	 */
     int getSensorsResponse(int nr);
-
-	/// @deprecated This function is deprecated. Use getAnalogsAvg(int nr) instead.
-    int getAnalogsAvg();
-
-	/**
-	 * @brief Reads the average of all sensor values from the numbered (@a nr) serial device into two arrays: analog[8] and digital[8].
-	 * @param nr - Serial device number
-	 * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
-	 * @todo Does it actually work? Is this being used?
-	 */
-    int getAnalogsAvg(int nr);
-	
-	/// @deprecated This function is deprecated. Use setServo(int servo, unsigned char speed, int nr) instead.
-    void setServo(int servo, unsigned char speed);
-	/**
-	 * @brief Sends the new @a speed value of a given @a servo to the numbered (@a nr) serial device.
-	 * @param servo - Number of a @a servo on a serial device
-	 * @param speed - Servo speed value
-	 * @param nr - Serial device number
-	 */
-    void setServo(int servo, unsigned char speed, int nr);
-	
-	/// @deprecated This function is deprecated. Use setServoOff(int nr) instead.
-    void setServoOff();
-	/**
-	 * @brief Sends the command to turn off all servos on the numbered (@a nr) serial device.
-	 * @param nr - Serial device number
-	 */
-    void setServoOff(int nr);
-	
-	/// @deprecated This function is deprecated. Use setServoOn(int nr) instead.
-    void setServoOn();
-	/**
-	 * @brief Sends the command to turn on all servos on the numbered (@a nr) serial device.
-	 * @param nr - Serial device number
-	 */
-    void setServoOn(int nr);
-    //DO NOT USE void saveServos();
 	
 	/// @deprecated This function is deprecated. Use setDcMotor(int motor, int speed, int nr) instead.
     void setDcMotor(int motor, int speed);
@@ -152,14 +79,8 @@ public:
     void setDcMotor(int motor, int speed, int nr);
     void setOmni(int dirDeg, int velocityBody, int velocityAngular);
     void setThrowerCommand(int requestedRpm, int precision);
-    void setDigital(unsigned char pin_nr);
-    void setDigital(unsigned char pin_nr, int nr);
-    void clearDigital(unsigned char pin_nr);
-    void clearDigital(unsigned char pin_nr, int nr);
-	void sendImage();
 
-    int analog[8]; ///< Holds all the analog sensor values retrieved by Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
-    int digital[8]; ///< Holds all the digital sensor values retrieved by Comm::readSerialMulti(char addr, int * analogs, int * digitals, int nr)
+    int microcontrollerData[16]; ///< Holds all the analog sensor values retrieved by Comm::readSerialMulti(char addr, int * microcontrollerData, int nr)
     
 
 protected:
@@ -169,10 +90,7 @@ protected:
   View * view;
 public:
   IplImage* _img;
-private:
-  //SendThread thread;  // pole vaja
-  unsigned char digitalBitMaskValue;
-  
+private:  
 };
 
 #endif

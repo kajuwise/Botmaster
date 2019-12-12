@@ -30,11 +30,17 @@
 
 #include "config.h"
 
+#define MSG_MC_DATA_NR_ELEMENTS 16
+#define MSG_MC_DATA_HEADER '\a'
+#define MSG_MC_DATA_CHECKSUM_DUMMY 1337
+
+
 /**
  * @brief This class creates communication channel to microcontroller, polls events from controller, realizes communication protocol.
  * @author Valdur Kaldvee
- * @author Margus Ernits <margus.ernits@itcollege.ee>
- * @author Mauno Pihelgas <mpihelga@itcollege.ee>
+ * @author Margus Ernits
+ * @author Mauno Pihelgas
+ * @author Erik Kaju
  */
 class Comm{
 public:
@@ -109,21 +115,19 @@ public:
      * @brief Reads multiple values from the serial device and saves them in two arrays (analog & digital).
 	 * @deprecated This function is deprecated. Use readSerialMulti(char, int *, int *, const int) instead.
      * @param addr - ServoBasic address (multiple addresses on one controller)
-     * @param analogs - pointer to the array of 'analog' values
-     * @param digitals - pointer to the array of 'digital' values
+     * @param microControllerData - pointer to the array of microcontroller values
      * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
      */
-    int readSerialMulti(char, int *, int *);
+    int readSerialMulti(char, int *);
 	
     /**
      * @brief Reads multiple values from the numbered (nr) serial device and saves them in two arrays (analog & digital).
      * @param addr - ServoBasic address (multiple addresses on one controller)
-     * @param analogs - pointer to the array of 'analog' values
-     * @param digitals - pointer to the array of 'digital' values
+     * @param microControllerData - pointer to the array of microcontroller values
 	 * @param nr - Serial device number
      * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
      */
-    int readSerialMulti(char, int *, int *, const int);
+    int readSerialMulti(char, int *, const int);
 
     /**
      * @brief Requests a read start for multiple values from the serial device.
@@ -151,7 +155,7 @@ public:
 	 * @param nr - Serial device number
      * @return 0 | 1 (0 = SUCCESS, 1 = FAILURE)
      */
-    int serialMultiResponse(int *, int *, int);
+    int serialMultiResponse(int *, int);
 
    static Comm  & getComm()
     {
@@ -167,10 +171,10 @@ private:
     QWaitCondition isLocked;
     Comm();
 
-   
-
     Comm(Comm const&);
     Comm& operator=(Comm const&);
+
+    uint8_t fletcherChecksum(int *, int);
     
     /**
      * @brief Closes and tries to reopen the serial device.

@@ -24,18 +24,12 @@
 #define GOAL_CLOSE 270
 #define BLACK_LINE 850
 
-#define DIGITAL_SIG_ROBOT_SELECTOR 0
-#define DIGITAL_SIG_FIELD_SELECTOR 1
-#define DIGITAL_SIG_START_BUTTON 2
-#define DIGITAL_SIG_EZ_RC 3
-
 #define ROLLER_STATE_STANDBY 111
 #define ROLLER_STATE_CAPTURING 122
 #define ROLLER_STATE_HOLDING 133
 #define ROLLER_STATE_THROWING 144
 
 #include "robottesttool.h"
-
 
 /* Omni cheatsheet
  * dirDeg - direction of movement (0 is forward, 90 is sideways to the right)
@@ -201,10 +195,6 @@ void Neve::go() {
         printGoalInfo();
         checkKeyPressAction();
         getSensorsResponse();
-
-        qDebug() << "Getting sensors respone";
-        qDebug() << digital[0] << " " << digital[1] << " " << digital[2] << " " << digital[3] << " " << digital[4] << " " << digital[5] << " " << digital[6] << " " << digital[7] << " ";
-
         readRobotAndFieldSwitches();
         // readRemoteCtrl();
         clearToKick = true;
@@ -223,14 +213,14 @@ void Neve::go() {
 
             cvPutText(_img, "SHOOTING TEST", cvPoint(150, 150), &(image->font), CV_RGB(255,255,255));
 
-            int distanceAccordingToLidar = digital[5];
+            int distanceAccordingToLidar = microcontrollerData[MC_DATA_LIDAR_DISTANCE];
             qDebug() << "Lidar distance: " << distanceAccordingToLidar;
             qDebug() << "Time since last throw: " << timerShootingTest.elapsed();
 
-            if (digital[6] == ROLLER_STATE_HOLDING
+            if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_HOLDING
                     && (timerShootingTest.elapsed() == 0 || timerShootingTest.elapsed() > 3000)) {
 
-                int distanceAccordingToLidar = digital[5];
+                int distanceAccordingToLidar = microcontrollerData[MC_DATA_LIDAR_DISTANCE];
                 qDebug() << "Lidar distance: " << distanceAccordingToLidar;
 
                 int shootingRpm = calculateThrowerRpm(distanceAccordingToLidar);
@@ -279,15 +269,15 @@ void Neve::go() {
 
         // Robot is waiting start
         if (state == WAITING_START) {
-            if (digital[DIGITAL_SIG_START_BUTTON] == 0 && listeningToRemote == false) {
+            if (microcontrollerData[MC_DATA_START_BUTTON] == 0 && listeningToRemote == false) {
                 qDebug() << "Manual button pressed down. Setting listening to remote to true;";
                 listeningToRemote = true;
                 continue;
-            } else if (listeningToRemote == true && digital[DIGITAL_SIG_START_BUTTON] == 1) {
+            } else if (listeningToRemote == true && microcontrollerData[MC_DATA_START_BUTTON] == 1) {
 //                qDebug() << "Manual button key up. Starting to wait for second click.";
                 waitingSecondClick = true;
                 conf.setSendCmdEnabled(1);
-            } else if (digital[DIGITAL_SIG_START_BUTTON] == 0 && waitingSecondClick == true) {
+            } else if (microcontrollerData[MC_DATA_START_BUTTON] == 0 && waitingSecondClick == true) {
                 qDebug() << "Received second click and setting mustRun to true!";
                 mustRun = true;
                 continue;
@@ -317,7 +307,7 @@ void Neve::go() {
         // Robot is searching the ball.
         if (state == FIND_BALL) {
 
-            if (digital[6] == ROLLER_STATE_HOLDING) {
+            if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_HOLDING) {
                 setState(AIM_TO_SHOOT);
                 continue;
             }
@@ -614,7 +604,7 @@ void Neve::go() {
                 continue;
             }
 
-            if (digital[6] == ROLLER_STATE_HOLDING) {
+            if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_HOLDING) {
                 qDebug() << "GOT THE BALL";
                 setOmni(0,0,0);
                 msleep(50);
@@ -754,14 +744,14 @@ void Neve::go() {
 
         if (state == SHOOTING_IN_PROGRESS) {
            msleep(200);
-           if (digital[6] == ROLLER_STATE_THROWING) {
+           if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_THROWING) {
                 qDebug() << "Waiting while thrower is shooting";
                 continue;
-            } else if (digital[6] == ROLLER_STATE_CAPTURING) {
+            } else if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_CAPTURING) {
                 timerSinceLastThrow.start();
                 setState(FIND_BALL);
                 continue;
-            } else if (digital[6] == ROLLER_STATE_HOLDING) {
+            } else if (microcontrollerData[MC_DATA_ROLLER_STATE] == ROLLER_STATE_HOLDING) {
                 qDebug() << "Surprise holding";
                 setState(AIM_TO_SHOOT);
                 continue;
@@ -798,7 +788,7 @@ void Neve::go() {
         // Stateless actions
         if (state != WAITING_START) {
             // Avoid driving over black line
-            if (analog[3] > BLACK_LINE || analog[4] > BLACK_LINE) {
+            if (microcontrollerData[3] > BLACK_LINE || microcontrollerData[4] > BLACK_LINE) {
                 //state = ESCAPE_BLACK_LINE;
                 state=FIND_BALL;
             }
@@ -1502,15 +1492,15 @@ void Neve::findGoals() {
 }
 
 void Neve::readRobotAndFieldSwitches() {
-    if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 0) {
+    if (microcontrollerData[MC_DATA_ROBOT_SELECTOR] == 0) {
         selectedRobot = QChar(RC_SIG_A);
-    } else if (digital[DIGITAL_SIG_ROBOT_SELECTOR] == 1) {
+    } else if (microcontrollerData[MC_DATA_ROBOT_SELECTOR] == 1) {
         selectedRobot = QChar(RC_SIG_B);
     }
 
-    if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 0) {
+    if (microcontrollerData[MC_DATA_FIELD_SELECTOR] == 0) {
         selectedField = RC_SIG_A;
-    } else if (digital[DIGITAL_SIG_FIELD_SELECTOR] == 1) {
+    } else if (microcontrollerData[MC_DATA_FIELD_SELECTOR] == 1) {
         selectedField = RC_SIG_B;
     }
 }
@@ -1550,7 +1540,7 @@ void Neve::waitActionSignalFromRemoteCtrl(char actionStart) {
 }
 
 bool Neve::isRCSignalTargetingCommand(char action) { // TODO timer to reset last command to 0 after few seconds
-    int currentRCSignal = analog[1];
+    int currentRCSignal = microcontrollerData[1];
     if (currentRCSignal != 0) {
 //        qDebug() << lastTargetedRCCommand << "<- Last | Current:" << currentRCSignal;
         if (currentRCSignal != lastTargetedRCCommand) {
@@ -1647,7 +1637,7 @@ void Neve::distancePreserveTurn(int angle) {
 }
 
 Neve::BallState Neve::getBallSocketState() const {
-    if (analog[0] > BEAM_VALUE_BALL_IN_SOCKET) {
+    if (microcontrollerData[0] > BEAM_VALUE_BALL_IN_SOCKET) {
         return BallInSocket;
     } else {
         return BallNotInSocket;
@@ -1669,7 +1659,7 @@ bool Neve::isCloseToGoal() const
         || goalTarget.rect.width >= 1200;
 
 
-    return analog[2] > GOAL_CLOSE && (ownGoalLooksClose || targetGoalLooksClose);
+    return microcontrollerData[2] > GOAL_CLOSE && (ownGoalLooksClose || targetGoalLooksClose);
 
 }
 
