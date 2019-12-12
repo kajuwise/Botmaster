@@ -576,40 +576,48 @@ bool readRemote(char* field, char* robot, bool* start) {
 }
 
 void getMesasurments() {
-  
-  Serial.print(analog[0]);
-  Serial.print(",");
-  Serial.print(remoteCode);
-  Serial.print(",");
-  Serial.print(-1);
-  Serial.print(",");
-  Serial.print(-1);
-  Serial.print(",");
-  Serial.print(-1);
-  Serial.print(",");
-  Serial.print(-1);
-  Serial.print(",");
-  Serial.print(b1.nr);
-  Serial.print(",");
-  Serial.print(b2.nr);
-  Serial.print(",");
-  
-  Serial.print(robotButton);
-  Serial.print(",");
-  Serial.print(fieldButton);
-  Serial.print(",");
-  Serial.print(digitalRead(START_BUTTON_PIN));
-  Serial.print(",");
-  Serial.print(digitalRead(EZ_RC_PIN));
-  Serial.print(",");
-  Serial.print((int) myxaInstance1.motorReadings.mechanicalRpm); 
-  Serial.print(",");
-  Serial.print(lidarDistanceMeasurement);
-  Serial.print(",");
-  Serial.print(throwerState);
-  Serial.print(",");
-  Serial.print(-1);
-  Serial.println("");
+
+  //msg contents
+  int measurements[] = {
+      
+      analog[0],
+      remoteCode,
+      -1,
+      -1,
+      -1,
+      -1,
+      b1.nr,
+      b2.nr,
+      
+      robotButton, 
+      fieldButton,
+      digitalRead(START_BUTTON_PIN),
+      digitalRead(EZ_RC_PIN),
+      (int) myxaInstance1.motorReadings.mechanicalRpm,
+      (int) lidarDistanceMeasurement,
+      throwerState,
+      -1
+      
+  };
+
+  //Send msg
+  Serial.print("\a");
+  for (int i = 0; i < ARRAY_SIZE(measurements); i++) {
+    Serial.print(measurements[i]);
+    Serial.print(",");
+  }
+  Serial.print(fletcherChecksum(measurements, ARRAY_SIZE(measurements)));
+  Serial.print("\n");
+}
+
+uint8_t fletcherChecksum(int * microcontrollerData, int dataLength) {
+    uint8_t sum1 = 0;
+    uint8_t sum2 = 0;
+    while (dataLength--){
+        sum1 += *microcontrollerData++;
+        sum2 += sum1;
+    }
+    return (sum1 & 0xF) | (sum2 << 4);
 }
 
 void readAnalogs() {
